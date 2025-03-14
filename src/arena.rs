@@ -3,9 +3,16 @@ use crate::sheep;
 use crate::sheep::SheepTrait;
 use std::collections::HashSet;
 
+#[derive(Hash, Eq, PartialEq, Clone)]
+pub struct Commit {
+    pub sheep: sheep::Sheep,
+    pub letter: char,
+}
+
 pub struct Arena {
     dimension: usize,
     configurations: HashSet<sheep::Sheep>,
+    commits: HashSet<Commit>,
     source: HashSet<sheep::Sheep>,
     target: HashSet<sheep::Sheep>,
 }
@@ -15,9 +22,11 @@ impl Arena {
         let mut arena = Arena::new(nfa.nb_states());
         /* create a sheep of size arena.dimension and set every coordinate to 1 or 0 depending whether the stte is initial or not  */
 
-        let all_configurations: Vec<nfa::State> =
-            sheep::SheepTrait::new(nfa.nb_states(), sheep::OMEGA);
-        arena.add_configuration(all_configurations);
+        let mega_sheep: Vec<nfa::State> = sheep::SheepTrait::new(nfa.nb_states(), sheep::OMEGA);
+
+        nfa.get_letters().iter().for_each(|&letter| {
+            arena.add_commit(letter, &mega_sheep);
+        });
 
         let initial_configuration: Vec<nfa::State> = nfa
             .states()
@@ -54,30 +63,40 @@ impl Arena {
         return Arena {
             dimension: dimension,
             configurations: HashSet::new(),
+            commits: HashSet::new(),
             source: HashSet::new(),
             target: HashSet::new(),
         };
     }
 
-    fn _check_configuration(&self, configuration: &sheep::Sheep) {
-        if configuration.len() != self.dimension {
+    fn _check_configuration(&self, sheep: &sheep::Sheep) {
+        if sheep.len() != self.dimension {
             panic!("Configuration is not of the dimension of the arena");
         }
     }
 
-    fn add_configuration(&mut self, configuration: sheep::Sheep) {
-        self._check_configuration(&configuration);
-        self.configurations.insert(configuration);
+    fn add_configuration(&mut self, sheep: &sheep::Sheep) {
+        self._check_configuration(sheep);
+        self.configurations.insert(sheep.clone());
+    }
+
+    fn add_commit(&mut self, letter: char, sheep: &sheep::Sheep) {
+        let commit = Commit {
+            sheep: sheep.clone(),
+            letter: letter,
+        };
+        self.add_configuration(&commit.sheep);
+        self.commits.insert(commit);
     }
 
     fn add_source(&mut self, configuration: sheep::Sheep) {
-        self.source.insert(configuration.clone());
-        self.add_configuration(configuration);
+        self.add_configuration(&configuration);
+        self.source.insert(configuration);
     }
 
     fn add_target(&mut self, configuration: sheep::Sheep) {
-        self.target.insert(configuration.clone());
-        self.add_configuration(configuration);
+        self.add_configuration(&configuration);
+        self.target.insert(configuration);
     }
 }
 
@@ -89,7 +108,7 @@ mod test {
     fn arena() {
         let mut arena = Arena::new(3);
         let configuration = sheep::Sheep::from(vec![1, 2, 3]);
-        arena.add_configuration(configuration.clone());
+        arena.add_configuration(&configuration);
         assert!(arena.configurations.contains(&configuration));
     }
 

@@ -30,6 +30,16 @@ impl Nfa {
         };
     }
 
+    pub fn get_letters(&self) -> Vec<Letter> {
+        let mut letters = Vec::new();
+        self.transitions.iter().for_each(|t| {
+            if !letters.contains(&t.letter) {
+                letters.push(t.letter);
+            }
+        });
+        return letters;
+    }
+
     pub fn add_transition(&mut self, from: State, to: State, label: char) {
         self._check_state(from);
         self._check_state(to);
@@ -106,6 +116,11 @@ mod test {
         nfa.add_transition(1, 1, 'b');
         nfa.add_initial(0);
         nfa.add_final(0);
+
+        let letters = nfa.get_letters();
+        assert!(letters.contains(&'a'));
+        assert!(letters.contains(&'b'));
+        assert!(letters.len() == 2);
 
         assert!(nfa.accepts(""));
         assert!(nfa.accepts("ababbaba"));
