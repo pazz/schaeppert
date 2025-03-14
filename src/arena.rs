@@ -16,7 +16,7 @@ impl Arena {
         /* create a sheep of size arena.dimension and set every coordinate to 1 or 0 depending whether the stte is initial or not  */
 
         let all_configurations: Vec<nfa::State> =
-            nfa.states().iter().map(|&x| sheep::OMEGA).collect();
+            sheep::SheepTrait::new(nfa.nb_states(), sheep::OMEGA);
         arena.add_configuration(all_configurations);
 
         let initial_configuration: Vec<nfa::State> = nfa

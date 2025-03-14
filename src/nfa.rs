@@ -35,7 +35,7 @@ impl Nfa {
     }
 
     fn _check_state(&self, q: State) {
-        if (q >= self.nb_states) {
+        if q >= self.nb_states {
             panic!("State {} is not in the NFA", q);
         }
     }
