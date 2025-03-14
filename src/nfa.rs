@@ -1,3 +1,7 @@
+/*
+authors @GBathie + @Numero7
+ */
+
 use std::collections::HashSet;
 
 pub struct Transition {
@@ -27,6 +31,8 @@ impl Nfa {
     }
 
     pub fn add_transition(&mut self, from: State, to: State, label: char) {
+        self._check_state(from);
+        self._check_state(to);
         self.transitions.push(Transition {
             from: from,
             letter: label,

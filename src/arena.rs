@@ -110,6 +110,7 @@ mod test {
         let medium_sheep = sheep::Sheep::from(vec![sheep::OMEGA / 2, sheep::OMEGA / 2]);
         let ini_sheep = sheep::Sheep::from(vec![sheep::OMEGA, 0]);
         let final_sheep = sheep::Sheep::from(vec![0, sheep::OMEGA]);
+
         assert!(arena.contains(&master_sheep));
         assert!(arena.contains(&medium_sheep));
         assert!(arena.contains(&ini_sheep));
