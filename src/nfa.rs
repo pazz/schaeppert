@@ -4,10 +4,11 @@ authors @GBathie + @Numero7
 
 use std::collections::HashSet;
 
+#[derive(Clone)]
 pub struct Transition {
-    from: State,
-    letter: Letter,
-    to: State,
+    pub from: State,
+    pub letter: Letter,
+    pub to: State,
 }
 
 pub struct Nfa {

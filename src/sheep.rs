@@ -1,13 +1,16 @@
-use std::vec::Vec;
+use std::{collections::HashSet, vec::Vec};
 
 //the length of the vector coincides with the number of states
 pub type Sheep = Vec<usize>;
+
+pub type Ideal = HashSet<Sheep>;
 
 pub const OMEGA: usize = usize::MAX;
 
 pub trait SheepTrait {
     fn new(dimension: usize, val: usize) -> Self;
     fn is_below(&self, other: &Self) -> bool;
+    fn is_in_ideal(&self, ideal: &Ideal) -> bool;
 }
 
 impl SheepTrait for Sheep {
@@ -17,6 +20,10 @@ impl SheepTrait for Sheep {
 
     fn is_below(&self, other: &Self) -> bool {
         self.iter().enumerate().all(|(i, &x)| x <= other[i])
+    }
+
+    fn is_in_ideal(&self, ideal: &Ideal) -> bool {
+        ideal.iter().any(|bound| self.is_below(bound))
     }
 }
 

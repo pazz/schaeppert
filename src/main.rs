@@ -1,8 +1,9 @@
 mod arena;
+mod flow;
 mod nfa;
+mod semigroup;
 mod sheep;
 mod solver;
-
 fn main() {
     /*
         The objective is to be able to perform the following operations:
@@ -21,7 +22,7 @@ fn main() {
          */
     let nfa = get_nfa();
     let arena = arena::Arena::from_nfa(nfa);
-    let solver = solver::Solver::new(arena);
+    let solver = solver::Solver::new(&arena);
     let solution = solver.solve();
     println!("Result: {}", solution.to_string());
 }

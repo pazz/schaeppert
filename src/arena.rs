@@ -1,4 +1,6 @@
+use crate::flow;
 use crate::nfa;
+use crate::semigroup;
 use crate::sheep;
 use crate::sheep::SheepTrait;
 use std::collections::HashSet;
@@ -9,12 +11,14 @@ pub struct Commit {
     pub letter: char,
 }
 
+#[derive(Clone)]
 pub struct Arena {
     dimension: usize,
     configurations: HashSet<sheep::Sheep>,
     commits: HashSet<Commit>,
-    source: HashSet<sheep::Sheep>,
-    target: HashSet<sheep::Sheep>,
+    source: sheep::Sheep,
+    target: sheep::Sheep,
+    transitions: HashSet<nfa::Transition>,
 }
 
 impl Arena {
@@ -33,30 +37,80 @@ impl Arena {
             .iter()
             .map(|&x| if nfa.is_initial(&x) { sheep::OMEGA } else { 0 }) // Convert to 0 or 1
             .collect();
-        arena.add_source(initial_configuration);
+        arena.set_source(initial_configuration);
 
         let final_configuration: Vec<nfa::State> = nfa
             .states()
             .iter()
             .map(|&x| if nfa.is_final(&x) { sheep::OMEGA } else { 0 }) // Convert to 0 or 1
             .collect();
-        arena.add_target(final_configuration);
+        arena.set_target(final_configuration);
 
         return arena;
     }
 
-    pub fn contains(&self, configuration: &sheep::Sheep) -> bool {
-        self.configurations
+    pub fn shrink_to_largest_subarena_without_deadend_nor_sink(&mut self) {
+        loop {
+            let nb_dead_ends_removed = self.remove_dead_ends();
+            println!("Removed {} dead ends", nb_dead_ends_removed);
+            let nb_sinks_removed = self.remove_sinks();
+            println!("Removed {} sinks", nb_sinks_removed);
+            if nb_sinks_removed == 0 {
+                break;
+            }
+        }
+    }
+
+    // Remove dead ends and returns true off something changed
+    pub fn remove_dead_ends(&mut self) -> usize {
+        let non_deadend: HashSet<sheep::Sheep> = self
+            .commits
             .iter()
-            .any(|c| configuration.is_below(c))
+            .map(|commit| commit.sheep.clone())
+            .collect();
+        let before = self.configurations.len();
+        self.configurations.retain(|c| non_deadend.contains(c));
+        let after = self.configurations.len();
+        return before - after;
+    }
+
+    pub fn compute_flow_semigroup(&self) -> semigroup::FlowSemigroup {
+        let mut action_flows = HashSet::new();
+        for commit in self.commits.iter() {
+            let action = commit.letter;
+            let edges: HashSet<(usize, usize)> = self.get_edges(action);
+            let domain = &commit.sheep;
+            let flow = flow::Flow::from_domain_and_edges(domain, &edges);
+            action_flows.insert(flow);
+        }
+        let semigroup = semigroup::FlowSemigroup::compute(action_flows);
+        return semigroup;
+    }
+
+    pub fn remove_sinks(&mut self) -> usize {
+        let monoid = self.compute_flow_semigroup();
+        let sinks = monoid.compute_sinks(&self.configurations, &self.target);
+        let nb_sinks = sinks.len();
+        for sink in sinks {
+            self.configurations.remove(&sink);
+        }
+        return nb_sinks;
+    }
+
+    pub fn initial_configuration_belong_to_the_arena(&self) -> bool {
+        self.contains(&self.source)
+    }
+
+    pub fn contains(&self, sheep: &sheep::Sheep) -> bool {
+        self.configurations.iter().any(|c| sheep.is_below(c))
     }
 
     pub fn is_final(&self, configuration: &sheep::Sheep) -> bool {
-        self.target.iter().any(|c| configuration.is_below(c))
+        configuration.is_below(&self.target)
     }
 
     pub fn is_initial(&self, configuration: &sheep::Sheep) -> bool {
-        self.source.iter().any(|c| configuration.is_below(c))
+        configuration.is_below(&self.source)
     }
 
     pub fn new(dimension: usize) -> Self {
@@ -64,8 +118,9 @@ impl Arena {
             dimension: dimension,
             configurations: HashSet::new(),
             commits: HashSet::new(),
-            source: HashSet::new(),
-            target: HashSet::new(),
+            source: sheep::Sheep::new(),
+            target: sheep::Sheep::new(),
+            transitions: HashSet::new(),
         };
     }
 
@@ -89,14 +144,22 @@ impl Arena {
         self.commits.insert(commit);
     }
 
-    fn add_source(&mut self, configuration: sheep::Sheep) {
+    fn set_source(&mut self, configuration: sheep::Sheep) {
         self.add_configuration(&configuration);
-        self.source.insert(configuration);
+        self.source = configuration;
     }
 
-    fn add_target(&mut self, configuration: sheep::Sheep) {
+    fn set_target(&mut self, configuration: sheep::Sheep) {
         self.add_configuration(&configuration);
-        self.target.insert(configuration);
+        self.target = configuration;
+    }
+
+    fn get_edges(&self, action: char) -> HashSet<(usize, usize)> {
+        self.transitions
+            .iter()
+            .filter(|t| t.letter == action)
+            .map(|t| (t.from, t.to))
+            .collect()
     }
 }
 
