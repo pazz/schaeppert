@@ -17,6 +17,7 @@ impl PartialOrd for Coef {
 }
 
 pub const ZERO: Coef = Coef::Value(0);
+#[allow(dead_code)]
 pub const ONE: Coef = Coef::Value(1);
 pub const OMEGA: Coef = Coef::Omega;
 
@@ -72,9 +73,9 @@ mod test {
 
     #[test]
     fn sum() {
-        let vec = vec![ONE, ONE, ONE];
+        let vec = [ONE, ONE, ONE];
         assert_eq!(vec.iter().copied().sum::<Coef>(), Coef::Value(3));
-        let vec = vec![ONE, OMEGA, ONE];
+        let vec = [ONE, OMEGA, ONE];
         assert_eq!(vec.iter().copied().sum::<Coef>(), OMEGA);
     }
 
