@@ -3,16 +3,29 @@ use std::fmt;
 use std::{collections::HashSet, vec::Vec};
 
 #[derive(Clone, Eq, PartialEq, Hash)]
-pub struct Sheep(pub Vec<usize>);
+pub struct Sheep(Vec<usize>);
 
 #[derive(Clone, Eq, PartialEq)]
-pub struct Ideal(pub HashSet<Sheep>);
+pub struct Ideal(HashSet<Sheep>);
+impl Ideal {
+    pub(crate) fn sheeps(&self) -> impl Iterator<Item = &Sheep> {
+        self.0.iter()
+    }
+
+    pub(crate) fn from_vec(into: Vec<Sheep>) -> Self {
+        Ideal(into.into_iter().collect())
+    }
+}
 
 impl Sheep {
     pub const OMEGA: usize = usize::MAX;
 
     pub fn new(dimension: usize, val: usize) -> Self {
         Sheep(vec![val; dimension])
+    }
+
+    pub(crate) fn from_vec(vec: Vec<usize>) -> Sheep {
+        Sheep(vec.iter().map(|&x| x as usize).collect())
     }
 
     pub fn is_below(&self, other: &Self) -> bool {

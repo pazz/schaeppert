@@ -55,12 +55,12 @@ impl FlowSemigroup {
     }
 
     pub fn get_winning_ideal(&self, target: &sheep::Sheep) -> sheep::Ideal {
-        sheep::Ideal(
+        sheep::Ideal::from_vec(
             self.flows
                 .iter()
-                .map(|flow| (flow, sheep::Sheep(flow.im().to_vec())))
+                .map(|flow| (flow, sheep::Sheep::from_vec(flow.im())))
                 .filter(|(_, im)| im.is_below(target))
-                .map(|(flow, _)| sheep::Sheep(flow.dom()))
+                .map(|(flow, _)| sheep::Sheep::from_vec(flow.dom()))
                 .collect(),
         )
     }

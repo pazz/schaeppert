@@ -62,9 +62,9 @@ fn compute_action_flows(
     edges: &HashMap<nfa::Letter, Graph>,
 ) -> HashSet<flow::Flow> {
     let mut action_flows = HashSet::new();
-    for (action, ideal) in &strategy.0 {
+    for (action, ideal) in strategy.iter() {
         let edges_for_action = edges.get(action).unwrap();
-        for sheep in &ideal.0 {
+        for sheep in ideal.sheeps() {
             let flow = flow::Flow::from_domain_and_edges(&sheep, edges_for_action);
             action_flows.insert(flow);
         }

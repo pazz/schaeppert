@@ -118,7 +118,7 @@ impl Flow {
     pub(crate) fn from_domain_and_edges(domain: &sheep::Sheep, edges: &Graph) -> Flow {
         println!("Creating flow from domain and edges");
         println!("domain {}", domain);
-        println!("edges {:?}", edges.0);
+        println!("edges {}", edges);
 
         let dim = domain.len();
         if edges.iter().any(|f| f.0 >= dim || f.1 >= dim) {
@@ -138,7 +138,8 @@ impl fmt::Display for Flow {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut result = String::new();
         for i in 0..self.dim {
-            let sheep = sheep::Sheep(self.entries[i * self.dim..(i + 1) * self.dim].to_vec());
+            let sheep =
+                sheep::Sheep::from_vec(self.entries[i * self.dim..(i + 1) * self.dim].to_vec());
             result.push_str(sheep.to_string().as_str());
             result.push_str("\n");
         }
@@ -152,8 +153,8 @@ mod test {
 
     #[test]
     fn from_domain_and_edges() {
-        let domain = sheep::Sheep(vec![1, 2, 3]);
-        let edges = Graph([(0, 1), (1, 2)].into());
+        let domain = sheep::Sheep::from_vec(vec![1, 2, 3]);
+        let edges = Graph::from_vec([(0, 1), (1, 2)].to_vec());
         let flow = Flow::from_domain_and_edges(&domain, &edges);
         assert_eq!(flow.entries, vec![0, 1, 0, 0, 0, 2, 0, 0, 0]);
     }
@@ -161,8 +162,8 @@ mod test {
     #[test]
     #[should_panic]
     fn from_domain_and_edges_panic_case() {
-        let domain = sheep::Sheep(vec![1, 2, 3]);
-        let edges = Graph([(0, 1), (1, 3)].into());
+        let domain = sheep::Sheep::from_vec(vec![1, 2, 3]);
+        let edges = Graph::from_vec(vec![(0, 1), (1, 3)]);
 
         let default_hook = std::panic::take_hook();
         std::panic::set_hook(Box::new(|_| {}));
