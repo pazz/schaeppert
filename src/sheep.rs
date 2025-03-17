@@ -46,6 +46,7 @@ impl fmt::Display for Sheep {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::coef::OMEGA;
     use crate::coef::ZERO;
 
     #[test]

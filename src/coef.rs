@@ -2,7 +2,8 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::iter::Sum;
 use std::ops::Add;
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Coef {
     Value(u16),
     Omega,
@@ -54,5 +55,35 @@ impl fmt::Display for Coef {
             Coef::Value(0) => write!(f, "_"),
             Coef::Value(x) => write!(f, "{}", x),
         }
+    }
+}
+
+//tests
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn add() {
+        assert_eq!(ONE + ONE, Coef::Value(2));
+        assert_eq!(OMEGA + ONE, OMEGA);
+        assert_eq!(OMEGA + OMEGA, OMEGA);
+    }
+
+    #[test]
+    fn sum() {
+        let vec = vec![ONE, ONE, ONE];
+        assert_eq!(vec.iter().copied().sum::<Coef>(), Coef::Value(3));
+        let vec = vec![ONE, OMEGA, ONE];
+        assert_eq!(vec.iter().copied().sum::<Coef>(), OMEGA);
+    }
+
+    #[test]
+    fn cmp() {
+        assert!(ONE < OMEGA);
+        assert!(ZERO < ONE);
+        assert!(ZERO < OMEGA);
+        assert!(OMEGA < Coef::Value(1));
+        assert!(Coef::Value(1) < Coef::Value(2));
     }
 }
