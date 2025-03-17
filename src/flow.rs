@@ -169,7 +169,7 @@ impl fmt::Display for Flow {
         for i in 0..self.dim {
             let sheep =
                 sheep::Sheep::from_vec(self.entries[i * self.dim..(i + 1) * self.dim].to_vec());
-            result.push_str(sheep.to_string().as_str());
+            result.push_str(&sheep.to_string());
             result.push('\n');
         }
         write!(f, "{}", result)
@@ -195,11 +195,6 @@ mod test {
         let domain = sheep::Sheep::from_vec(vec![1, 2, 3]);
         let edges = Graph::from_vec(vec![(0, 1), (1, 3)]);
 
-        let default_hook = std::panic::take_hook();
-        std::panic::set_hook(Box::new(|_| {}));
-
         Flow::from_domain_and_edges(&domain, &edges);
-
-        std::panic::set_hook(default_hook);
     }
 }
