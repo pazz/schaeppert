@@ -1,10 +1,12 @@
-mod arena;
 mod flow;
+mod graph;
 mod nfa;
 mod semigroup;
 mod sheep;
 mod solver;
+mod strategy;
 fn main() {
+    env_logger::init();
     /*
         The objective is to be able to perform the following operations:
         1.	Load an NFA from a file.
@@ -21,10 +23,8 @@ fn main() {
         6.  symbolic monoid
          */
     let nfa = get_nfa();
-    let arena = arena::Arena::from_nfa(nfa);
-    let solver = solver::Solver::new(&arena);
-    let solution = solver.solve();
-    println!("Result: {}", solution.to_string());
+    let solution = solver::solve(&nfa);
+    println!("{}", solution.to_string());
 }
 
 fn get_nfa() -> nfa::Nfa {

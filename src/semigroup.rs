@@ -1,6 +1,6 @@
 use crate::flow;
 use crate::flow::FlowTrait;
-use crate::sheep::{self, SheepTrait};
+use crate::sheep;
 use std::collections::HashSet; // for distinct method
 
 pub struct FlowSemigroup {
@@ -14,7 +14,7 @@ impl FlowSemigroup {
         };
     }
 
-    pub fn compute(action_flows: HashSet<flow::Flow>) -> Self {
+    pub fn compute(action_flows: &HashSet<flow::Flow>) -> Self {
         let mut semigroup = FlowSemigroup::new();
         for flow in action_flows.iter() {
             semigroup.flows.insert(flow.clone());
@@ -54,24 +54,14 @@ impl FlowSemigroup {
         }
     }
 
-    pub fn compute_sinks(
-        &self,
-        configurations: &HashSet<sheep::Sheep>,
-        target: &sheep::Sheep,
-    ) -> HashSet<sheep::Sheep> {
-        //precompute domaind and images
-        let domains: sheep::Ideal = self
-            .flows
-            .iter()
-            .map(|flow| (flow, flow.im()))
-            .filter(|(_, im)| im.is_below(target))
-            .map(|(flow, _)| flow.dom())
-            .collect();
-
-        configurations
-            .iter()
-            .filter(|&sheep| !sheep.is_in_ideal(&domains))
-            .cloned()
-            .collect()
+    pub fn get_winning_ideal(&self, target: &sheep::Sheep) -> sheep::Ideal {
+        sheep::Ideal(
+            self.flows
+                .iter()
+                .map(|flow| (flow, sheep::Sheep(flow.im().to_vec())))
+                .filter(|(_, im)| im.is_below(target))
+                .map(|(flow, _)| sheep::Sheep(flow.dom()))
+                .collect(),
+        )
     }
 }

@@ -67,40 +67,20 @@ impl Nfa {
         self.accepting.insert(q);
     }
 
-    fn step(&self, states: HashSet<State>, a: char) -> HashSet<State> {
-        return states
-            .into_iter()
-            .flat_map(|q| {
-                self.transitions
-                    .iter()
-                    .filter(move |t| t.from == q && t.letter == a)
-                    .map(|t| t.to.clone())
-            })
-            .collect();
-    }
-
-    pub fn accepts(&self, s: &str) -> bool {
-        let mut reachable_states = self.initial.clone();
-        for a in s.chars() {
-            reachable_states = self.step(reachable_states, a)
-        }
-        return reachable_states.iter().any(|q| self.accepting.contains(q));
-    }
-
     pub fn nb_states(&self) -> usize {
         self.nb_states
     }
 
-    pub fn states(&self) -> Vec<State> {
-        (0..self.nb_states).collect()
+    pub(crate) fn transitions(&self) -> Vec<Transition> {
+        self.transitions.clone()
     }
 
-    pub fn is_initial(&self, state: &State) -> bool {
-        self.initial.contains(state)
+    pub(crate) fn initial_states(&self) -> HashSet<State> {
+        self.initial.clone()
     }
 
-    pub fn is_final(&self, state: &State) -> bool {
-        self.accepting.contains(state)
+    pub(crate) fn final_states(&self) -> HashSet<State> {
+        self.accepting.clone()
     }
 }
 
@@ -122,12 +102,6 @@ mod test {
         assert!(letters.contains(&'a'));
         assert!(letters.contains(&'b'));
         assert!(letters.len() == 2);
-
-        assert!(nfa.accepts(""));
-        assert!(nfa.accepts("ababbaba"));
-        assert!(nfa.accepts("aabbaa"));
-        assert!(!nfa.accepts("abbaa"));
-        assert!(!nfa.accepts("aaa"));
     }
 
     #[test]
@@ -137,12 +111,5 @@ mod test {
         nfa.add_transition(1, 0, 'b');
         nfa.add_initial(0);
         nfa.add_final(0);
-
-        assert!(nfa.accepts(""));
-        assert!(nfa.accepts("ababab"));
-        assert!(nfa.accepts("abab"));
-        assert!(!nfa.accepts("aba"));
-        assert!(!nfa.accepts("aababa"));
-        assert!(!nfa.accepts("abababba"));
     }
 }
