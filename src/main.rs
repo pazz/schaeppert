@@ -1,5 +1,6 @@
 mod flow;
 mod graph;
+mod ideal;
 mod nfa;
 mod semigroup;
 mod sheep;

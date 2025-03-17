@@ -1,5 +1,6 @@
 use crate::flow;
 use crate::flow::FlowTrait;
+use crate::ideal;
 use crate::sheep;
 use std::collections::HashSet; // for distinct method
 
@@ -54,8 +55,8 @@ impl FlowSemigroup {
         }
     }
 
-    pub fn get_winning_ideal(&self, target: &sheep::Sheep) -> sheep::Ideal {
-        sheep::Ideal::from_vec(
+    pub fn get_winning_ideal(&self, target: &sheep::Sheep) -> ideal::Ideal {
+        ideal::Ideal::from_vec(
             self.flows
                 .iter()
                 .map(|flow| (flow, sheep::Sheep::from_vec(flow.im())))

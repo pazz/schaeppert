@@ -1,21 +1,8 @@
-use log::debug;
 use std::fmt;
-use std::{collections::HashSet, vec::Vec};
+use std::vec::Vec;
 
 #[derive(Clone, Eq, PartialEq, Hash)]
 pub struct Sheep(Vec<usize>);
-
-#[derive(Clone, Eq, PartialEq)]
-pub struct Ideal(HashSet<Sheep>);
-impl Ideal {
-    pub(crate) fn sheeps(&self) -> impl Iterator<Item = &Sheep> {
-        self.0.iter()
-    }
-
-    pub(crate) fn from_vec(into: Vec<Sheep>) -> Self {
-        Ideal(into.into_iter().collect())
-    }
-}
 
 impl Sheep {
     pub const OMEGA: usize = usize::MAX;
@@ -30,11 +17,6 @@ impl Sheep {
 
     pub fn is_below(&self, other: &Self) -> bool {
         self.0.iter().enumerate().all(|(i, &x)| x <= other.0[i])
-    }
-
-    pub fn is_in_ideal(&self, ideal: &Ideal) -> bool {
-        debug!("Checking whether {} belongs to {}", self, ideal);
-        ideal.0.iter().any(|bound| self.is_below(bound))
     }
 
     pub(crate) fn len(&self) -> usize {
@@ -63,14 +45,6 @@ impl fmt::Display for Sheep {
             .collect::<Vec<_>>()
             .join(" , ");
         write!(f, "| {} |", content)
-    }
-}
-
-impl fmt::Display for Ideal {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut vec: Vec<String> = self.0.iter().map(|x| x.to_string()).collect();
-        vec.sort();
-        write!(f, "{}", vec.join("\r\n\t"))
     }
 }
 
@@ -104,26 +78,5 @@ mod test {
         assert!(!medium_sheep.is_below(&final_sheep));
         assert!(!ini_sheep.is_below(&final_sheep));
         assert!(final_sheep.is_below(&final_sheep));
-    }
-
-    #[test]
-    fn is_in_ideal() {
-        let omega = Sheep::OMEGA;
-        let master_sheep = Sheep(vec![omega, omega]);
-        let medium_sheep = Sheep(vec![1, 1]);
-        let ini_sheep = Sheep(vec![1, 0]);
-        let final_sheep = Sheep(vec![0, 2]);
-
-        let ideal = Ideal([ini_sheep.clone(), final_sheep.clone()].into());
-        assert!(ini_sheep.is_in_ideal(&ideal));
-        assert!(final_sheep.is_in_ideal(&ideal));
-        assert!(!master_sheep.is_in_ideal(&ideal));
-        assert!(!medium_sheep.is_in_ideal(&ideal));
-
-        let ideal2 = Ideal([medium_sheep.clone()].into());
-        assert!(ini_sheep.is_in_ideal(&ideal2));
-        assert!(!final_sheep.is_in_ideal(&ideal2));
-        assert!(!master_sheep.is_in_ideal(&ideal2));
-        assert!(medium_sheep.is_in_ideal(&ideal2));
     }
 }

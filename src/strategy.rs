@@ -1,5 +1,5 @@
+use crate::ideal::Ideal;
 use crate::nfa;
-use crate::sheep::Ideal;
 use crate::sheep::Sheep;
 
 use std::collections::HashMap;
@@ -20,7 +20,7 @@ impl Strategy {
     }
 
     pub fn is_defined_on(&self, source: &Sheep) -> bool {
-        self.0.values().any(|ideal| source.is_in_ideal(ideal))
+        self.0.values().any(|ideal| ideal.contains(source))
     }
 
     pub(crate) fn restrict_to_ideal(&self, _winning_ideal: Ideal) -> bool {
