@@ -18,6 +18,7 @@ impl Graph {
         self.0.iter()
     }
 
+    #[allow(dead_code)]
     pub(crate) fn from_vec(to_vec: Vec<(usize, usize)>) -> Graph {
         Graph(to_vec.into_iter().collect())
     }
