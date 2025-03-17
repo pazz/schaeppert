@@ -4,6 +4,7 @@ use crate::nfa;
 use crate::nfa::Nfa;
 use crate::semigroup;
 use crate::sheep::Sheep;
+use crate::sheep::OMEGA;
 use crate::strategy::Strategy;
 use log::debug;
 use std::collections::HashMap;
@@ -21,10 +22,11 @@ pub fn solve(nfa: &nfa::Nfa) -> Solution {
     let target = get_omega_sheep(dim, nfa.final_states());
 
     let edges = get_edges(nfa);
-    let strategy = Strategy::new(dim, &nfa.get_letters());
+    let strategy = Strategy::get_maximal_strategy(dim, &nfa.get_letters());
     let mut result = true;
 
     while result {
+        //convert strategy to flows
         let action_flows = compute_action_flows(&strategy, &edges);
         debug!("\nAction flows:\n{}", _flows_to_string(&action_flows));
         let semigroup = semigroup::FlowSemigroup::compute(&action_flows);
@@ -45,7 +47,7 @@ pub fn solve(nfa: &nfa::Nfa) -> Solution {
 fn get_omega_sheep(dim: usize, states: HashSet<usize>) -> Sheep {
     let mut sheep = Sheep::new(dim, 0);
     for state in states {
-        sheep.set(state, Sheep::OMEGA);
+        sheep.set(state, OMEGA);
     }
     return sheep;
 }
@@ -65,8 +67,10 @@ fn compute_action_flows(
     for (action, ideal) in strategy.iter() {
         let edges_for_action = edges.get(action).unwrap();
         for sheep in ideal.sheeps() {
-            let flow = flow::Flow::from_domain_and_edges(&sheep, edges_for_action);
-            action_flows.insert(flow);
+            let flows = flow::Flow::from_domain_and_edges(&sheep, edges_for_action);
+            for flow in flows {
+                action_flows.insert(flow);
+            }
         }
     }
     return action_flows;

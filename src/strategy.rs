@@ -1,6 +1,7 @@
 use crate::ideal::Ideal;
 use crate::nfa;
 use crate::sheep::Sheep;
+use crate::sheep::OMEGA;
 
 use std::collections::HashMap;
 use std::fmt;
@@ -8,8 +9,8 @@ use std::fmt;
 pub struct Strategy(HashMap<nfa::Letter, Ideal>);
 
 impl Strategy {
-    pub fn new(dim: usize, letters: &Vec<nfa::Letter>) -> Self {
-        let sheep = Sheep::new(dim, Sheep::OMEGA);
+    pub fn get_maximal_strategy(dim: usize, letters: &Vec<nfa::Letter>) -> Self {
+        let sheep = Sheep::new(dim, OMEGA);
         let maximal_ideal = Ideal::from_vec([sheep].into());
         Strategy(
             letters

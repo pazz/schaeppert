@@ -1,12 +1,12 @@
 use std::fmt;
 use std::vec::Vec;
 
+pub const OMEGA: usize = usize::MAX;
+
 #[derive(Clone, Eq, PartialEq, Hash)]
 pub struct Sheep(Vec<usize>);
 
 impl Sheep {
-    pub const OMEGA: usize = usize::MAX;
-
     pub fn new(dimension: usize, val: usize) -> Self {
         Sheep(vec![val; dimension])
     }
@@ -54,10 +54,10 @@ mod test {
 
     #[test]
     fn is_below() {
-        let master_sheep = Sheep(vec![Sheep::OMEGA, Sheep::OMEGA]);
-        let medium_sheep = Sheep(vec![Sheep::OMEGA / 2, Sheep::OMEGA / 2]);
-        let ini_sheep = Sheep(vec![Sheep::OMEGA, 0]);
-        let final_sheep = Sheep(vec![0, Sheep::OMEGA]);
+        let master_sheep = Sheep(vec![OMEGA, OMEGA]);
+        let medium_sheep = Sheep(vec![OMEGA / 2, OMEGA / 2]);
+        let ini_sheep = Sheep(vec![OMEGA, 0]);
+        let final_sheep = Sheep(vec![0, OMEGA]);
 
         assert!(master_sheep.is_below(&master_sheep));
         assert!(medium_sheep.is_below(&master_sheep));

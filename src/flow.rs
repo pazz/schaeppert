@@ -1,9 +1,8 @@
 use crate::graph::Graph;
 use crate::sheep;
+use crate::sheep::OMEGA;
 use std::fmt;
 use std::{collections::HashSet, vec::Vec};
-pub const INFTY: usize = usize::MAX;
-pub const OMEGA: usize = INFTY - 1;
 
 pub type Domain = Vec<usize>;
 pub type Image = Vec<usize>;
@@ -16,15 +15,15 @@ pub struct Flow {
 }
 
 pub trait FlowTrait {
-    fn dom(&self) -> Domain;
+    fn dom(&self, roundup: bool) -> Domain;
     fn im(&self) -> Image;
     fn product(&self, other: &Flow) -> Flow;
     fn iteration(&self) -> HashSet<Flow>;
 }
 
 impl FlowTrait for Flow {
-    fn dom(&self) -> Domain {
-        Self::_dom(self.dim, &self.entries)
+    fn dom(&self, roundup: bool) -> Domain {
+        Self::_dom(self.dim, &self.entries, roundup)
     }
 
     fn im(&self) -> Image {
@@ -40,12 +39,12 @@ impl FlowTrait for Flow {
 
     fn iteration(&self) -> HashSet<Flow> {
         //!todo!("generates all possible sharp results");
-        HashSet::from([Self::_iteration(&self.dom(), self.dim)])
+        HashSet::from([Self::_iteration(&self.entries, self.dim)])
     }
 }
 
 impl Flow {
-    fn _dom(dim: usize, entries: &Vec<usize>) -> Domain {
+    fn _dom(dim: usize, entries: &Vec<usize>, roundup: bool) -> Domain {
         if entries.len() != dim * dim {
             panic!("Invalid number of entries");
         }
@@ -54,14 +53,17 @@ impl Flow {
             return result;
         }
         for i in 0..dim {
-            let max = entries[i * dim..(i + 1) * dim].iter().max().unwrap();
-
-            result[i] = match *max {
-                0 => 0,
-                OMEGA => OMEGA,
-                INFTY => INFTY,
-                _ => 1, //entries[i * dim..(i + 1) * dim].iter().sum(),
-            };
+            let line = &entries[i * dim..(i + 1) * dim];
+            if line.iter().any(|x| *x == OMEGA) {
+                result[i] = OMEGA;
+            } else {
+                let sum: usize = line.iter().sum();
+                if roundup && sum > dim {
+                    result[i] = OMEGA;
+                } else {
+                    result[i] = sum;
+                }
+            }
         }
         result
     }
@@ -75,13 +77,12 @@ impl Flow {
             return result;
         }
         for j in 0..dim {
-            let max = (0..dim).map(|i| entries[i * dim + j]).max().unwrap();
-            result[j] = match max {
-                0 => 0,
-                OMEGA => OMEGA,
-                INFTY => INFTY,
-                _ => 1, //(0..dim).map(|i| entries[i * dim + j]).sum(),
-            };
+            let column: Vec<usize> = (0..dim).map(|i| entries[i + j * dim]).collect();
+            if column.iter().any(|x| *x == OMEGA) {
+                result[j] = OMEGA;
+            } else {
+                result[j] = column.iter().sum();
+            }
         }
         result
     }
@@ -115,7 +116,15 @@ impl Flow {
         }
     }
 
-    pub(crate) fn from_domain_and_edges(domain: &sheep::Sheep, edges: &Graph) -> Flow {
+    //compute all possible flows compatible with this domain and edges
+    //there might be choice from small constants: a 5 distributed on 3 edges might lead to (5 + 0 + 0) or (1 + 1+ 3)
+    //this is annoyingly exponential and should be stored in the future as a compact representation,
+    //compatible with product and start in the monoid
+    //but for now we will just compute it exhasutively
+    /*
+    WIP
+    */
+    pub(crate) fn from_domain_and_edges(domain: &sheep::Sheep, edges: &Graph) -> HashSet<Flow> {
         println!("Creating flow from domain and edges");
         println!("domain {}", domain);
         println!("edges {}", edges);
@@ -125,12 +134,32 @@ impl Flow {
             panic!("Edge out of domain");
         }
         let mut entries = vec![0; dim * dim];
+        for i in 0..dim {
+            let out = edges.get_successors(i);
+            let val = domain.get(i);
+            match val {
+                0 => {}
+                OMEGA => {
+                    for j in out {
+                        //todo take 1 out of omega in some direction
+                        entries[i * dim + j] = OMEGA;
+                    }
+                }
+                x => {
+                    //compute all possible distribution of x over out.len() edges
+                    //this is a bit annoyingly exponential
+                    for j in out {
+                        entries[i * dim + j] = x; //wrong todo
+                    }
+                }
+            }
+        }
         for (i, j) in edges.iter() {
             entries[i * dim + j] = domain.get(*i);
         }
         let result = Flow { dim, entries };
         println!("flow\n{}", result);
-        result
+        HashSet::new() //todo
     }
 }
 
@@ -156,7 +185,8 @@ mod test {
         let domain = sheep::Sheep::from_vec(vec![1, 2, 3]);
         let edges = Graph::from_vec([(0, 1), (1, 2)].to_vec());
         let flow = Flow::from_domain_and_edges(&domain, &edges);
-        assert_eq!(flow.entries, vec![0, 1, 0, 0, 0, 2, 0, 0, 0]);
+        assert!(flow.len() == 0);
+        //todo
     }
 
     #[test]

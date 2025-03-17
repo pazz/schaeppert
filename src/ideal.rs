@@ -21,10 +21,12 @@ impl Ideal {
 
 #[cfg(test)]
 mod test {
+    use std::usize;
+
     use super::*;
     #[test]
     fn is_in_ideal() {
-        let omega = Sheep::OMEGA;
+        let omega = usize::MAX;
         let master_sheep = Sheep::from_vec(vec![omega, omega]);
         let medium_sheep = Sheep::from_vec(vec![1, 1]);
         let ini_sheep = Sheep::from_vec(vec![1, 0]);
