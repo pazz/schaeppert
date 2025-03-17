@@ -1,5 +1,4 @@
 use crate::coef::Coef;
-use crate::coef::OMEGA;
 use std::fmt;
 use std::vec::Vec;
 
