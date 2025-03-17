@@ -31,13 +31,14 @@ impl fmt::Display for Ideal {
 mod test {
 
     use super::*;
+    use crate::coef::{OMEGA, ONE, ZERO};
+
     #[test]
     fn is_in_ideal() {
-        let omega = usize::MAX;
-        let master_sheep = Sheep::from_vec(vec![omega, omega]);
-        let medium_sheep = Sheep::from_vec(vec![1, 1]);
-        let ini_sheep = Sheep::from_vec(vec![1, 0]);
-        let final_sheep = Sheep::from_vec(vec![0, 2]);
+        let master_sheep = Sheep::from_vec(vec![OMEGA, OMEGA]);
+        let medium_sheep = Sheep::from_vec(vec![ONE, ONE]);
+        let ini_sheep = Sheep::from_vec(vec![ONE, ZERO]);
+        let final_sheep = Sheep::from_vec(vec![ZERO, ONE + ONE]);
 
         let ideal = Ideal([ini_sheep.clone(), final_sheep.clone()].into());
         assert!(ideal.contains(&ini_sheep));

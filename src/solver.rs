@@ -1,10 +1,11 @@
+use crate::coef::OMEGA;
+use crate::coef::ZERO;
 use crate::flow;
 use crate::graph::Graph;
 use crate::nfa;
 use crate::nfa::Nfa;
 use crate::semigroup;
 use crate::sheep::Sheep;
-use crate::sheep::OMEGA;
 use crate::strategy::Strategy;
 use log::debug;
 use std::collections::HashMap;
@@ -45,7 +46,7 @@ pub fn solve(nfa: &nfa::Nfa) -> Solution {
 }
 
 fn get_omega_sheep(dim: usize, states: HashSet<usize>) -> Sheep {
-    let mut sheep = Sheep::new(dim, 0);
+    let mut sheep = Sheep::new(dim, ZERO);
     for state in states {
         sheep.set(state, OMEGA);
     }

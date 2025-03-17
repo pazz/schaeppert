@@ -1,7 +1,7 @@
+use crate::coef::OMEGA;
 use crate::ideal::Ideal;
 use crate::nfa;
 use crate::sheep::Sheep;
-use crate::sheep::OMEGA;
 
 use std::collections::HashMap;
 use std::fmt;

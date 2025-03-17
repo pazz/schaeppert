@@ -1,3 +1,4 @@
+mod coef;
 mod flow;
 mod graph;
 mod ideal;
@@ -20,7 +21,7 @@ fn main() {
         1.	NFAs (Non-deterministic Finite Automata).
         2.	Symbolic configuration
         3.  arena (i.e. set of symbolic configuration)
-        4.  symbolic flow. stores the set of omega and the set of 1 or omega
+        4.  symbolic flow. stores the set of OMEGA and the set of 1 or OMEGA
         5.  instance of the symbolic path problem
         6.  symbolic monoid
          */

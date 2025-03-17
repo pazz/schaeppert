@@ -1,17 +1,17 @@
+use crate::coef::{Coef, OMEGA, ZERO};
 use crate::graph::Graph;
 use crate::sheep;
-use crate::sheep::OMEGA;
 use std::fmt;
 use std::{collections::HashSet, vec::Vec};
 
-pub type Domain = Vec<usize>;
-pub type Image = Vec<usize>;
+pub type Domain = Vec<Coef>;
+pub type Image = Vec<Coef>;
 
 #[derive(Eq, PartialEq, Hash, Clone)]
 pub struct Flow {
     pub dim: usize,
     //size is dim * dim
-    entries: Vec<usize>,
+    entries: Vec<Coef>,
 }
 
 pub trait FlowTrait {
@@ -44,11 +44,11 @@ impl FlowTrait for Flow {
 }
 
 impl Flow {
-    fn _dom(dim: usize, entries: &[usize], roundup: bool) -> Domain {
+    fn _dom(dim: usize, entries: &[Coef], roundup: bool) -> Domain {
         if entries.len() != dim * dim {
             panic!("Invalid number of entries");
         }
-        let mut result = vec![0; dim];
+        let mut result = vec![ZERO; dim];
         if dim == 0 {
             return result;
         }
@@ -57,38 +57,43 @@ impl Flow {
             if line.iter().any(|x| *x == OMEGA) {
                 result[i] = OMEGA;
             } else {
-                let sum: usize = line.iter().sum();
-                if roundup && sum > dim {
-                    result[i] = OMEGA;
-                } else {
-                    result[i] = sum;
+                let sum = line.iter().copied().sum();
+                result[i] = match sum {
+                    Coef::Omega => OMEGA,
+                    Coef::Value(x) => {
+                        if roundup && x > dim as u16 {
+                            OMEGA
+                        } else {
+                            Coef::Value(x)
+                        }
+                    }
                 }
             }
         }
         result
     }
 
-    fn _im(dim: usize, entries: &[usize]) -> Image {
+    fn _im(dim: usize, entries: &[Coef]) -> Image {
         if entries.len() != dim * dim {
             panic!("Invalid number of entries");
         }
-        let mut result = vec![0; dim];
+        let mut result = vec![ZERO; dim];
         if dim == 0 {
             return result;
         }
         for j in 0..dim {
-            let column: Vec<usize> = (0..dim).map(|i| entries[i + j * dim]).collect();
+            let column: Vec<Coef> = (0..dim).map(|i| entries[i + j * dim]).collect();
             if column.iter().any(|x| *x == OMEGA) {
                 result[j] = OMEGA;
             } else {
-                result[j] = column.iter().sum();
+                result[j] = column.iter().copied().sum();
             }
         }
         result
     }
 
-    fn _product(entries: &[usize], other_entries: &[usize], dim: usize) -> Vec<usize> {
-        let mut result = vec![0; dim * dim];
+    fn _product(entries: &[Coef], other_entries: &[Coef], dim: usize) -> Vec<Coef> {
+        let mut result = vec![ZERO; dim * dim];
         for i in 0..dim {
             for j in 0..dim {
                 result[i * dim + j] = (0..dim)
@@ -102,8 +107,8 @@ impl Flow {
 
     //iteration of a flow
 
-    pub fn _iteration(entries: &[usize], dim: usize) -> Flow {
-        let mut result: Vec<usize> = entries.into();
+    pub fn _iteration(entries: &[Coef], dim: usize) -> Flow {
+        let mut result: Vec<Coef> = entries.into();
         loop {
             let result_squared = Self::_product(&result, &result, dim);
             if result == result_squared {
@@ -133,15 +138,15 @@ impl Flow {
         if edges.iter().any(|f| f.0 >= dim || f.1 >= dim) {
             panic!("Edge out of domain");
         }
-        let mut entries = vec![0; dim * dim];
+        let mut entries = vec![ZERO; dim * dim];
         for i in 0..dim {
             let out = edges.get_successors(i);
             let val = domain.get(i);
             match val {
-                0 => {}
+                ZERO => {}
                 OMEGA => {
                     for j in out {
-                        //todo take 1 out of omega in some direction
+                        //todo take 1 out of OMEGA in some direction
                         entries[i * dim + j] = OMEGA;
                     }
                 }
@@ -179,10 +184,11 @@ impl fmt::Display for Flow {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::coef::ONE;
 
     #[test]
     fn from_domain_and_edges() {
-        let domain = sheep::Sheep::from_vec(vec![1, 2, 3]);
+        let domain = sheep::Sheep::from_vec(vec![ONE, ONE + ONE, ONE + ONE + ONE]);
         let edges = Graph::from_vec([(0, 1), (1, 2)].to_vec());
         let flow = Flow::from_domain_and_edges(&domain, &edges);
         assert!(flow.is_empty());
@@ -192,7 +198,7 @@ mod test {
     #[test]
     #[should_panic]
     fn from_domain_and_edges_panic_case() {
-        let domain = sheep::Sheep::from_vec(vec![1, 2, 3]);
+        let domain = sheep::Sheep::from_vec(vec![ONE, ONE + ONE, ONE + ONE + ONE]);
         let edges = Graph::from_vec(vec![(0, 1), (1, 3)]);
 
         Flow::from_domain_and_edges(&domain, &edges);

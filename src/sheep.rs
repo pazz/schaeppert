@@ -1,17 +1,17 @@
+use crate::coef::Coef;
+use crate::coef::OMEGA;
 use std::fmt;
 use std::vec::Vec;
 
-pub const OMEGA: usize = usize::MAX;
-
 #[derive(Clone, Eq, PartialEq, Hash)]
-pub struct Sheep(Vec<usize>);
+pub struct Sheep(Vec<Coef>);
 
 impl Sheep {
-    pub fn new(dimension: usize, val: usize) -> Self {
+    pub fn new(dimension: usize, val: Coef) -> Self {
         Sheep(vec![val; dimension])
     }
 
-    pub(crate) fn from_vec(vec: Vec<usize>) -> Sheep {
+    pub(crate) fn from_vec(vec: Vec<Coef>) -> Sheep {
         Sheep(vec)
     }
 
@@ -23,11 +23,11 @@ impl Sheep {
         self.0.len()
     }
 
-    pub(crate) fn get(&self, i: usize) -> usize {
+    pub(crate) fn get(&self, i: usize) -> Coef {
         self.0[i]
     }
 
-    pub(crate) fn set(&mut self, state: usize, val: usize) {
+    pub(crate) fn set(&mut self, state: usize, val: Coef) {
         self.0[state] = val;
     }
 }
@@ -37,11 +37,7 @@ impl fmt::Display for Sheep {
         let content = self
             .0
             .iter()
-            .map(|&x| match x {
-                0 => ".",
-                1 => "1",
-                _ => "w",
-            })
+            .map(|&x| x.to_string())
             .collect::<Vec<_>>()
             .join(" , ");
         write!(f, "| {} |", content)
@@ -51,13 +47,14 @@ impl fmt::Display for Sheep {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::coef::ZERO;
 
     #[test]
     fn is_below() {
         let master_sheep = Sheep(vec![OMEGA, OMEGA]);
-        let medium_sheep = Sheep(vec![OMEGA / 2, OMEGA / 2]);
-        let ini_sheep = Sheep(vec![OMEGA, 0]);
-        let final_sheep = Sheep(vec![0, OMEGA]);
+        let medium_sheep = Sheep(vec![Coef::Value(7), Coef::Value(7)]);
+        let ini_sheep = Sheep(vec![OMEGA, ZERO]);
+        let final_sheep = Sheep(vec![ZERO, OMEGA]);
 
         assert!(master_sheep.is_below(&master_sheep));
         assert!(medium_sheep.is_below(&master_sheep));
