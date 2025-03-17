@@ -9,7 +9,7 @@ use std::fmt;
 pub struct Strategy(HashMap<nfa::Letter, Ideal>);
 
 impl Strategy {
-    pub fn get_maximal_strategy(dim: usize, letters: &Vec<nfa::Letter>) -> Self {
+    pub fn get_maximal_strategy(dim: usize, letters: &[nfa::Letter]) -> Self {
         let sheep = Sheep::new(dim, OMEGA);
         let maximal_ideal = Ideal::from_vec([sheep].into());
         Strategy(

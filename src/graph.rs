@@ -4,7 +4,7 @@ use std::{collections::HashSet, fmt};
 pub struct Graph(HashSet<(usize, usize)>);
 
 impl Graph {
-    pub fn new(transitions: &Vec<nfa::Transition>, letter: &nfa::Letter) -> Self {
+    pub fn new(transitions: &[nfa::Transition], letter: &nfa::Letter) -> Self {
         Graph(
             transitions
                 .iter()

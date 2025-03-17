@@ -10,9 +10,9 @@ pub struct FlowSemigroup {
 
 impl FlowSemigroup {
     pub fn new() -> Self {
-        return FlowSemigroup {
+        FlowSemigroup {
             flows: HashSet::new(),
-        };
+        }
     }
 
     pub fn compute(action_flows: &HashSet<flow::Flow>) -> Self {
@@ -21,7 +21,7 @@ impl FlowSemigroup {
             semigroup.flows.insert(flow.clone());
         }
         semigroup.close_by_product_and_iteration();
-        return semigroup;
+        semigroup
     }
 
     fn close_by_product_and_iteration(&mut self) {

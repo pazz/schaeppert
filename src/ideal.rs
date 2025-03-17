@@ -19,9 +19,16 @@ impl Ideal {
     }
 }
 
+impl fmt::Display for Ideal {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut vec: Vec<String> = self.0.iter().map(|x| x.to_string()).collect();
+        vec.sort();
+        write!(f, "{}", vec.join("\r\n\t"))
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use std::usize;
 
     use super::*;
     #[test]
@@ -43,13 +50,5 @@ mod test {
         assert!(!ideal2.contains(&final_sheep));
         assert!(!ideal2.contains(&master_sheep));
         assert!(ideal2.contains(&medium_sheep));
-    }
-}
-
-impl fmt::Display for Ideal {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut vec: Vec<String> = self.0.iter().map(|x| x.to_string()).collect();
-        vec.sort();
-        write!(f, "{}", vec.join("\r\n\t"))
     }
 }

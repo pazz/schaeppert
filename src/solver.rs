@@ -49,7 +49,7 @@ fn get_omega_sheep(dim: usize, states: HashSet<usize>) -> Sheep {
     for state in states {
         sheep.set(state, OMEGA);
     }
-    return sheep;
+    sheep
 }
 
 fn get_edges(nfa: &Nfa) -> HashMap<nfa::Letter, Graph> {
@@ -67,13 +67,13 @@ fn compute_action_flows(
     for (action, ideal) in strategy.iter() {
         let edges_for_action = edges.get(action).unwrap();
         for sheep in ideal.sheeps() {
-            let flows = flow::Flow::from_domain_and_edges(&sheep, edges_for_action);
+            let flows = flow::Flow::from_domain_and_edges(sheep, edges_for_action);
             for flow in flows {
                 action_flows.insert(flow);
             }
         }
     }
-    return action_flows;
+    action_flows
 }
 
 fn _flows_to_string(flows: &HashSet<flow::Flow>) -> String {
@@ -85,11 +85,11 @@ fn _flows_to_string(flows: &HashSet<flow::Flow>) -> String {
 impl fmt::Display for Solution {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.result {
-            return write!(
+            write!(
                 f,
                 "Controllable\nMaximal winning random walk:\n\t{}",
                 self.maximal_winning_strategy
-            );
+            )
         } else {
             write!(
                 f,

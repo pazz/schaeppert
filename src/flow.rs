@@ -44,7 +44,7 @@ impl FlowTrait for Flow {
 }
 
 impl Flow {
-    fn _dom(dim: usize, entries: &Vec<usize>, roundup: bool) -> Domain {
+    fn _dom(dim: usize, entries: &[usize], roundup: bool) -> Domain {
         if entries.len() != dim * dim {
             panic!("Invalid number of entries");
         }
@@ -68,7 +68,7 @@ impl Flow {
         result
     }
 
-    fn _im(dim: usize, entries: &Vec<usize>) -> Image {
+    fn _im(dim: usize, entries: &[usize]) -> Image {
         if entries.len() != dim * dim {
             panic!("Invalid number of entries");
         }
@@ -87,7 +87,7 @@ impl Flow {
         result
     }
 
-    fn _product(entries: &Vec<usize>, other_entries: &Vec<usize>, dim: usize) -> Vec<usize> {
+    fn _product(entries: &[usize], other_entries: &[usize], dim: usize) -> Vec<usize> {
         let mut result = vec![0; dim * dim];
         for i in 0..dim {
             for j in 0..dim {
@@ -102,8 +102,8 @@ impl Flow {
 
     //iteration of a flow
 
-    pub fn _iteration(entries: &Vec<usize>, dim: usize) -> Flow {
-        let mut result = entries.clone();
+    pub fn _iteration(entries: &[usize], dim: usize) -> Flow {
+        let mut result: Vec<usize> = entries.into();
         loop {
             let result_squared = Self::_product(&result, &result, dim);
             if result == result_squared {
@@ -170,7 +170,7 @@ impl fmt::Display for Flow {
             let sheep =
                 sheep::Sheep::from_vec(self.entries[i * self.dim..(i + 1) * self.dim].to_vec());
             result.push_str(sheep.to_string().as_str());
-            result.push_str("\n");
+            result.push('\n');
         }
         write!(f, "{}", result)
     }
@@ -185,7 +185,7 @@ mod test {
         let domain = sheep::Sheep::from_vec(vec![1, 2, 3]);
         let edges = Graph::from_vec([(0, 1), (1, 2)].to_vec());
         let flow = Flow::from_domain_and_edges(&domain, &edges);
-        assert!(flow.len() == 0);
+        assert!(flow.is_empty());
         //todo
     }
 

@@ -6,6 +6,7 @@ mod semigroup;
 mod sheep;
 mod solver;
 mod strategy;
+
 fn main() {
     env_logger::init();
     /*
@@ -25,7 +26,7 @@ fn main() {
          */
     let nfa = get_nfa();
     let solution = solver::solve(&nfa);
-    println!("{}", solution.to_string());
+    println!("{}", solution);
 }
 
 fn get_nfa() -> nfa::Nfa {
@@ -56,5 +57,5 @@ fn get_nfa() -> nfa::Nfa {
     nfa.add_transition(1, 0, 'l');
     nfa.add_transition(1, 0, 'r');
 
-    return nfa;
+    nfa
 }

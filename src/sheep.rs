@@ -12,7 +12,7 @@ impl Sheep {
     }
 
     pub(crate) fn from_vec(vec: Vec<usize>) -> Sheep {
-        Sheep(vec.iter().map(|&x| x as usize).collect())
+        Sheep(vec.to_vec())
     }
 
     pub fn is_below(&self, other: &Self) -> bool {

@@ -23,12 +23,12 @@ pub type Letter = char;
 
 impl Nfa {
     pub fn new(nb_states: usize) -> Self {
-        return Nfa {
-            nb_states: nb_states,
+        Nfa {
+            nb_states,
             initial: HashSet::new(),
             accepting: HashSet::new(),
             transitions: vec![],
-        };
+        }
     }
 
     pub fn get_letters(&self) -> Vec<Letter> {
@@ -38,16 +38,16 @@ impl Nfa {
                 letters.push(t.letter);
             }
         });
-        return letters;
+        letters
     }
 
     pub fn add_transition(&mut self, from: State, to: State, label: char) {
         self._check_state(from);
         self._check_state(to);
         self.transitions.push(Transition {
-            from: from,
+            from,
             letter: label,
-            to: to,
+            to,
         });
     }
 
