@@ -9,13 +9,6 @@ pub enum Coef {
     Omega,
 }
 
-// Implement PartialOrd for ordering
-impl PartialOrd for Coef {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
 pub const ZERO: Coef = Coef::Value(0);
 #[allow(dead_code)]
 pub const ONE: Coef = Coef::Value(1);
@@ -29,6 +22,12 @@ impl Ord for Coef {
             (Coef::Value(_), Coef::Omega) => Ordering::Less,
             (Coef::Value(x), Coef::Value(y)) => x.cmp(y),
         }
+    }
+}
+
+impl PartialOrd for Coef {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
