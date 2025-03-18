@@ -1,9 +1,8 @@
-use std::cmp::Ordering;
 use std::fmt;
 use std::iter::Sum;
 use std::ops::Add;
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, PartialOrd, Ord)]
 pub enum Coef {
     Value(u16),
     Omega,
@@ -13,23 +12,6 @@ pub const ZERO: Coef = Coef::Value(0);
 #[allow(dead_code)]
 pub const ONE: Coef = Coef::Value(1);
 pub const OMEGA: Coef = Coef::Omega;
-
-impl Ord for Coef {
-    fn cmp(&self, other: &Self) -> Ordering {
-        match (self, other) {
-            (Coef::Omega, Coef::Omega) => Ordering::Equal,
-            (Coef::Omega, Coef::Value(_)) => Ordering::Greater,
-            (Coef::Value(_), Coef::Omega) => Ordering::Less,
-            (Coef::Value(x), Coef::Value(y)) => x.cmp(y),
-        }
-    }
-}
-
-impl PartialOrd for Coef {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
 
 impl Add for Coef {
     type Output = Coef;
