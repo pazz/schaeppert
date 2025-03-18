@@ -33,7 +33,7 @@ impl Sum for Coef {
 impl fmt::Display for Coef {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Coef::Omega => write!(f, "w"),
+            Coef::Omega => write!(f, "ω"),
             Coef::Value(0) => write!(f, "_"),
             Coef::Value(x) => write!(f, "{}", x),
         }
