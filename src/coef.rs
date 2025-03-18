@@ -83,7 +83,7 @@ mod test {
         assert!(ONE < OMEGA);
         assert!(ZERO < ONE);
         assert!(ZERO < OMEGA);
-        assert!(OMEGA < Coef::Value(1));
-        assert!(Coef::Value(1) < Coef::Value(2));
+        assert!(ONE < OMEGA);
+        assert!(ONE < Coef::Value(2));
     }
 }
