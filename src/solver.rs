@@ -31,6 +31,7 @@ pub fn solve(nfa: &nfa::Nfa) -> Solution {
         let action_flows = compute_action_flows(&strategy, &edges);
         debug!("\nAction flows:\n{}", _flows_to_string(&action_flows));
         let semigroup = semigroup::FlowSemigroup::compute(&action_flows);
+        debug!("Semigroup: {}", semigroup);
         let winning_ideal = semigroup.get_winning_ideal(&target);
         debug!("Winning ideal: {}", winning_ideal);
         let changed = strategy.restrict_to_ideal(winning_ideal);
@@ -120,7 +121,7 @@ mod tests {
         let action_flows = compute_action_flows(&strategy, &edges);
         //a single action flow
         let flow: flow::Flow = Flow::from_entries(2, &[C0, OMEGA, C0, C0]);
-        assert_eq!(action_flows, [flow].iter().cloned().collect());
+        assert_eq!(action_flows, HashSet::from([flow]));
 
         let edges = get_edges(&nfa);
         assert_eq!(edges, {
@@ -144,13 +145,10 @@ mod tests {
         //a single action flow
         assert_eq!(
             computed,
-            [
+            HashSet::from([
                 Flow::from_entries(2, &[C0, OMEGA, C0, C0]),
                 Flow::from_entries(2, &[C0, C0, OMEGA, OMEGA]),
-            ]
-            .iter()
-            .cloned()
-            .collect()
+            ])
         );
         let edges = get_edges(&nfa);
         assert_eq!(edges, {

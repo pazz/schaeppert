@@ -1,6 +1,7 @@
-use crate::coef::{Coef, C0, OMEGA};
+use crate::coef::{Coef, C0, C1, OMEGA};
 use crate::graph::Graph;
 use crate::sheep;
+use log::debug;
 use std::fmt;
 use std::{collections::HashSet, vec::Vec};
 
@@ -18,7 +19,7 @@ pub trait FlowTrait {
     fn dom(&self, roundup: bool) -> Domain;
     fn im(&self) -> Image;
     fn product(&self, other: &Flow) -> Flow;
-    fn iteration(&self) -> HashSet<Flow>;
+    fn iteration(&self) -> Flow;
 }
 
 impl FlowTrait for Flow {
@@ -37,18 +38,37 @@ impl FlowTrait for Flow {
         Flow { dim, entries }
     }
 
-    fn iteration(&self) -> HashSet<Flow> {
-        //!todo!("generates all possible sharp results");
-        HashSet::from([Self::_iteration(&self.entries, self.dim)])
+    fn iteration(&self) -> Flow {
+        Self::_iteration(&self.entries, self.dim)
     }
 }
 
 impl Flow {
+    #[allow(dead_code)]
     pub fn from_entries(dim: usize, entries: &[Coef]) -> Flow {
+        if entries.len() != dim * dim {
+            panic!("Invalid number of entries");
+        }
         Flow {
             dim,
             entries: entries.into(),
         }
+    }
+
+    #[allow(dead_code)]
+    pub fn from_lines(lines: &[&[Coef]]) -> Flow {
+        let dim = lines.len();
+        if lines.iter().any(|x| x.len() != dim) {
+            panic!("Invalid line size ");
+        }
+        Flow::from_entries(
+            dim,
+            &lines
+                .iter()
+                .flat_map(|x| x.iter())
+                .cloned()
+                .collect::<Vec<Coef>>(),
+        )
     }
 
     fn _dom(dim: usize, entries: &[Coef], roundup: bool) -> Domain {
@@ -112,19 +132,56 @@ impl Flow {
         result
     }
 
-    //iteration of a flow
-
-    pub fn _iteration(entries: &[Coef], dim: usize) -> Flow {
+    //iteration of a fl
+    pub fn _idempotent(entries: &[Coef], dim: usize) -> Flow {
         let mut result: Vec<Coef> = entries.into();
         loop {
             let result_squared = Self::_product(&result, &result, dim);
             if result == result_squared {
-                return Flow {
-                    dim,
-                    entries: result,
-                };
+                break;
             }
             result = result_squared;
+        }
+        Flow {
+            dim,
+            entries: result,
+        }
+    }
+
+    pub fn _coef(entries: &[Coef], i: usize, j: usize, dim: usize) -> Coef {
+        entries[i * dim + j]
+    }
+
+    pub fn _is_1(entries: &[Coef], i: usize, j: usize, dim: usize) -> bool {
+        entries[i * dim + j] == C1
+    }
+
+    pub fn _is_omega(entries: &[Coef], i: usize, j: usize, dim: usize) -> bool {
+        entries[i * dim + j] == OMEGA
+    }
+
+    pub fn _iteration(entries: &[Coef], dim: usize) -> Flow {
+        let mut e = Self::_idempotent(entries, dim);
+        for s0 in 0..dim {
+            for t0 in 0..dim {
+                if Self::_is_1(entries, s0, t0, dim) {
+                    debug!("processing ? -- {} -- {} -- ?", s0, t0);
+                    for s in 0..dim {
+                        if Self::_is_omega(entries, s, s0, dim) {
+                            for t in 0..dim {
+                                if Self::_is_omega(entries, t0, t, dim) {
+                                    debug!("found {} -- {} -- {} -- {}", s, s0, t0, t);
+                                    e.entries[s * dim + t] = OMEGA;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Flow {
+            dim,
+            entries: e.entries,
         }
     }
 
@@ -307,7 +364,7 @@ mod test {
     fn get_lines_vec_test() {
         let domain = sheep::Sheep::from_vec(vec![C1, C3, OMEGA]);
         let edges = Graph::from_vec(vec![(0, 1), (1, 0), (1, 1), (2, 1), (2, 2)]);
-        let expected = vec![
+        let expected = [
             vec![vec![C0, C1, C0]],
             vec![
                 vec![C3, C0, C0],
@@ -353,5 +410,106 @@ mod test {
             },
         ];
         assert_eq!(flows, expected.into_iter().collect());
+    }
+
+    #[test]
+    fn idempotent_test1() {
+        let dim = 4;
+        let flow = Flow::from_lines(&[
+            &[OMEGA, OMEGA, C0, C0],
+            &[C0, C0, C1, C0],
+            &[C0, C0, C0, OMEGA],
+            &[C0, C0, C0, C0],
+        ]);
+        let expected = Flow::from_lines(&[
+            &[OMEGA, OMEGA, C1, C1],
+            &[C0, C0, C0, C0],
+            &[C0, C0, C0, C0],
+            &[C0, C0, C0, C0],
+        ]);
+        assert_eq!(Flow::_idempotent(&flow.entries, dim), expected);
+    }
+
+    #[test]
+    fn idempotent_test2() {
+        let dim = 4;
+        let flow = Flow::from_lines(&[
+            &[OMEGA, OMEGA, C0, C0],
+            &[C0, C0, C1, C0],
+            &[C0, C0, C0, OMEGA],
+            &[C0, C0, C0, OMEGA],
+        ]);
+        let expected = Flow::from_lines(&[
+            &[OMEGA, OMEGA, C1, C1],
+            &[C0, C0, C0, C1],
+            &[C0, C0, C0, OMEGA],
+            &[C0, C0, C0, OMEGA],
+        ]);
+        assert_eq!(Flow::_idempotent(&flow.entries, dim), expected);
+    }
+
+    //test iteration on the flow OMEGA 1 0 OMEGA
+    #[test]
+    fn iteration_test() {
+        let flow = Flow {
+            dim: 2,
+            entries: vec![OMEGA, C1, C0, OMEGA],
+        };
+        let expected = Flow {
+            dim: 2,
+            entries: vec![OMEGA, OMEGA, C0, OMEGA],
+        };
+        assert_eq!(flow.iteration(), expected);
+    }
+
+    #[test]
+    fn iteration_test2() {
+        let flow = Flow::from_lines(&[
+            &[OMEGA, OMEGA, C0, C0],
+            &[C0, C0, C1, C0],
+            &[C0, C0, C0, OMEGA],
+            &[C0, C0, C0, OMEGA],
+        ]);
+        let expected = Flow::from_lines(&[
+            &[OMEGA, OMEGA, C1, OMEGA],
+            &[C0, C0, C0, C1],
+            &[C0, C0, C0, OMEGA],
+            &[C0, C0, C0, OMEGA],
+        ]);
+        assert_eq!(flow.iteration(), expected);
+    }
+
+    #[test]
+    fn iteration_test3() {
+        let flow = Flow::from_lines(&[
+            &[OMEGA, OMEGA, C0, C0],
+            &[C0, OMEGA, C1, C0],
+            &[C0, C0, C0, OMEGA],
+            &[C0, C0, C0, OMEGA],
+        ]);
+        let expected = Flow::from_lines(&[
+            &[OMEGA, OMEGA, C1, OMEGA],
+            &[C0, OMEGA, C1, OMEGA],
+            &[C0, C0, C0, OMEGA],
+            &[C0, C0, C0, OMEGA],
+        ]);
+        assert_eq!(flow.iteration(), expected);
+    }
+
+    #[test]
+    fn iteration_test4() {
+        let flow = Flow::from_lines(&[
+            &[OMEGA, OMEGA, C0, C0],
+            &[C0, OMEGA, C1, C0],
+            &[C0, C0, OMEGA, OMEGA],
+            &[C0, C0, C0, OMEGA],
+        ]);
+        let expected = Flow::from_lines(&[
+            &[OMEGA, OMEGA, OMEGA, OMEGA],
+            &[C0, OMEGA, OMEGA, OMEGA],
+            &[C0, C0, OMEGA, OMEGA],
+            &[C0, C0, C0, OMEGA],
+        ]);
+        assert_eq!(flow.iteration(), expected);
     }
 }
