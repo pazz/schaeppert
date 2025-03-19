@@ -100,3 +100,78 @@ impl fmt::Display for Solution {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::flow::Flow;
+    use crate::nfa::Nfa;
+    use crate::strategy::Strategy;
+
+    //test compute_action_flows
+    #[test]
+    fn test_nfa_1() {
+        let mut nfa = Nfa::new(2);
+        nfa.add_initial(0);
+        nfa.add_final(1);
+        nfa.add_transition(0, 1, 'a');
+        let strategy = Strategy::get_maximal_strategy(2, &['a']);
+        let edges = get_edges(&nfa);
+        let action_flows = compute_action_flows(&strategy, &edges);
+        //a single action flow
+        let flow: flow::Flow = Flow::from_entries(2, &[C0, OMEGA, C0, C0]);
+        assert_eq!(action_flows, [flow].iter().cloned().collect());
+
+        let edges = get_edges(&nfa);
+        assert_eq!(edges, {
+            let mut map = HashMap::new();
+            map.insert('a', Graph::new(&nfa.transitions(), &'a'));
+            map
+        });
+    }
+
+    #[test]
+    fn test_nfa_2() {
+        let mut nfa = Nfa::new(2);
+        nfa.add_initial(0);
+        nfa.add_final(1);
+        nfa.add_transition(0, 1, 'a');
+        nfa.add_transition(1, 0, 'b');
+        nfa.add_transition(1, 1, 'b');
+        let strategy = Strategy::get_maximal_strategy(2, &['a', 'b']);
+        let edges = get_edges(&nfa);
+        let computed = compute_action_flows(&strategy, &edges);
+        //a single action flow
+        assert_eq!(
+            computed,
+            [
+                Flow::from_entries(2, &[C0, OMEGA, C0, C0]),
+                Flow::from_entries(2, &[C0, C0, OMEGA, OMEGA]),
+            ]
+            .iter()
+            .cloned()
+            .collect()
+        );
+        let edges = get_edges(&nfa);
+        assert_eq!(edges, {
+            let mut map = HashMap::new();
+            map.insert('a', Graph::new(&nfa.transitions(), &'a'));
+            map.insert('b', Graph::new(&nfa.transitions(), &'b'));
+            map
+        });
+    }
+
+    #[test]
+    fn test_solve() {
+        let mut nfa = Nfa::new(2);
+        nfa.add_initial(0);
+        nfa.add_final(1);
+        nfa.add_transition(0, 1, 'a');
+        let solution = solve(&nfa);
+        assert_eq!(solution.result, true);
+        assert_eq!(
+            solution.maximal_winning_strategy,
+            Strategy::get_maximal_strategy(2, &['a'])
+        );
+    }
+}

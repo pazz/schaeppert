@@ -1,6 +1,8 @@
 use crate::nfa;
 use std::{collections::HashSet, fmt};
 
+//Eq and Partial Eq
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Graph(HashSet<(usize, usize)>);
 
 impl Graph {

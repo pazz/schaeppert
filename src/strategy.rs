@@ -6,6 +6,7 @@ use crate::sheep::Sheep;
 use std::collections::HashMap;
 use std::fmt;
 
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Strategy(HashMap<nfa::Letter, Ideal>);
 
 impl Strategy {

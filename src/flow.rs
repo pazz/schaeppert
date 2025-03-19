@@ -44,6 +44,13 @@ impl FlowTrait for Flow {
 }
 
 impl Flow {
+    pub fn from_entries(dim: usize, entries: &[Coef]) -> Flow {
+        Flow {
+            dim,
+            entries: entries.into(),
+        }
+    }
+
     fn _dom(dim: usize, entries: &[Coef], roundup: bool) -> Domain {
         if entries.len() != dim * dim {
             panic!("Invalid number of entries");
@@ -243,15 +250,6 @@ impl fmt::Display for Flow {
 mod test {
     use super::*;
     use crate::coef::{C0, C1, C2, C3};
-
-    #[test]
-    fn from_domain_and_edges() {
-        let domain = sheep::Sheep::from_vec(vec![C1, C2, C3]);
-        let edges = Graph::from_vec([(0, 1), (1, 2)].to_vec());
-        let flow = Flow::from_domain_and_edges(&domain, &edges);
-        assert!(flow.is_empty());
-        //todo
-    }
 
     #[test]
     #[should_panic]

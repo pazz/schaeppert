@@ -2,7 +2,7 @@ use crate::coef::Coef;
 use std::fmt;
 use std::vec::Vec;
 
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Sheep(Vec<Coef>);
 
 impl Sheep {
@@ -46,8 +46,8 @@ impl fmt::Display for Sheep {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::coef::OMEGA;
     use crate::coef::C0;
+    use crate::coef::OMEGA;
 
     #[test]
     fn is_below() {

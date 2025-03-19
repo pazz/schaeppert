@@ -2,7 +2,7 @@ use crate::sheep::Sheep;
 use std::fmt;
 use std::{collections::HashSet, vec::Vec};
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Ideal(HashSet<Sheep>);
 
 impl Ideal {
@@ -31,7 +31,7 @@ impl fmt::Display for Ideal {
 mod test {
 
     use super::*;
-    use crate::coef::{C1, OMEGA, C0};
+    use crate::coef::{C0, C1, OMEGA};
 
     #[test]
     fn is_in_ideal() {
