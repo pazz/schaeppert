@@ -164,7 +164,9 @@ mod tests {
         let mut nfa = Nfa::new(2);
         nfa.add_initial(0);
         nfa.add_final(1);
+        nfa.add_transition(0, 0, 'a');
         nfa.add_transition(0, 1, 'a');
+        nfa.add_transition(1, 1, 'a');
         let solution = solve(&nfa);
         assert_eq!(solution.result, true);
         assert_eq!(

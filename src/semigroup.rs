@@ -1,12 +1,13 @@
 use crate::flow;
 use crate::ideal;
 use crate::nfa;
+use log::debug;
 use std::collections::HashSet; // for distinct method
 use std::collections::VecDeque;
 use std::fmt;
 
 pub struct FlowSemigroup {
-    pub flows: HashSet<flow::Flow>,
+    flows: HashSet<flow::Flow>,
 }
 
 impl FlowSemigroup {
@@ -25,26 +26,9 @@ impl FlowSemigroup {
         semigroup
     }
 
-    fn close_by_product_and_iteration(&mut self) {
-        let mut fresh: VecDeque<flow::Flow> = self.flows.iter().cloned().collect();
-        while !fresh.is_empty() {
-            let flow = fresh.pop_front().unwrap();
-            if self.flows.iter().any(|other| &flow <= other) {
-                continue;
-            }
-            fresh.push_back(flow.iteration());
-            {
-                let right_products = self.flows.iter().map(|other| &flow * other);
-                let left_products = self.flows.iter().map(|other| other * &flow);
-                let products: HashSet<flow::Flow> = left_products.chain(right_products).collect();
-                for product in products {
-                    let added = self.flows.insert(product.clone());
-                    if added {
-                        fresh.push_back(product);
-                    }
-                }
-            }
-        }
+    #[allow(dead_code)]
+    pub fn contains(&self, flow: &flow::Flow) -> bool {
+        Self::is_covered(flow, &self.flows)
     }
 
     pub fn get_winning_ideal(&self, target: &[nfa::State]) -> ideal::Ideal {
@@ -55,6 +39,73 @@ impl FlowSemigroup {
                 .map(|flow| flow.pre_image(target))
                 .collect::<Vec<_>>(),
         )
+    }
+
+    fn close_by_product_and_iteration(&mut self) {
+        let mut to_process: VecDeque<flow::Flow> = self.flows.iter().cloned().collect();
+        let mut processed = HashSet::<flow::Flow>::new();
+        while !to_process.is_empty() {
+            let flow = to_process.pop_front().unwrap();
+            debug!("\n\nclose_by_product_and_iteration processing\n{}", flow);
+            if Self::is_covered(&flow, &processed) {
+                debug!("Skipped\n{}", flow);
+                continue;
+            }
+            processed.insert(flow.clone());
+
+            let iteration = flow.iteration();
+            if !Self::is_covered(&iteration, &self.flows) {
+                print!("\n\nAdded iteration\n{}", iteration);
+                self.flows.insert(iteration.clone());
+                to_process.push_back(iteration);
+            } else {
+                debug!("\n\nSkipped iteration\n{}", iteration);
+            }
+            {
+                let right_products = self.flows.iter().map(|other| &flow * other);
+                let left_products = self.flows.iter().map(|other| other * &flow);
+                let products: HashSet<flow::Flow> = left_products.chain(right_products).collect();
+                for product in products {
+                    if !Self::is_covered(&product, &self.flows) {
+                        print!("\n\nAdded product\n{}", product);
+                        self.flows.insert(product.clone());
+                        to_process.push_back(product);
+                    } else {
+                        debug!("\n\nSkipped product\n{}", product);
+                    }
+                }
+            }
+            self.minimize();
+        }
+    }
+
+    fn is_covered(flow: &flow::Flow, others: &HashSet<flow::Flow>) -> bool {
+        debug!(
+            "Checking whether\n{} is covered by\n{}\n",
+            flow,
+            others
+                .iter()
+                .map(flow::Flow::to_string)
+                .collect::<Vec<_>>()
+                .join("\n")
+        );
+        return others.iter().any(|other| flow <= other);
+    }
+
+    fn minimize(&mut self) {
+        debug!("Minimizing semigroup");
+        let mut to_remove = HashSet::new();
+        for flow in self.flows.iter() {
+            if to_remove.contains(flow) {
+                continue;
+            }
+            if self.flows.iter().any(|other| flow < other) {
+                to_remove.insert(flow.clone());
+            }
+        }
+        for flow in to_remove.iter() {
+            self.flows.remove(flow);
+        }
     }
 }
 
@@ -76,12 +127,35 @@ mod tests {
     use crate::coef::{C0, C1, OMEGA};
     use crate::flow::Flow;
 
-    //test FlowSemigroup::compute
     #[test]
-    fn test_flow_semigroup_compute() {
-        let flows: HashSet<Flow> = [Flow::from_entries(2, &[OMEGA, C1, C0, OMEGA])].into();
+    fn test_flow_semigroup_compute1() {
+        let flowa = Flow::from_lines(&[&[OMEGA, C1], &[C0, OMEGA]]);
+        let flows: HashSet<Flow> = [flowa].into();
         let semigroup = FlowSemigroup::compute(&flows);
-        let flow = Flow::from_entries(2, &[OMEGA, OMEGA, C0, OMEGA]);
-        assert!(semigroup.flows.contains(&flow));
+        let flow_omega = Flow::from_entries(2, &[OMEGA, OMEGA, C0, OMEGA]);
+        print!("\nsemigroup\n\n{}", semigroup);
+        assert!(semigroup.flows.contains(&flow_omega));
+    }
+
+    #[test]
+    fn test_flow_semigroup_compute2() {
+        let flowa = Flow::from_lines(&[&[OMEGA, OMEGA, C0], &[OMEGA, OMEGA, C1], &[C0, C0, OMEGA]]);
+        let flowb = Flow::from_lines(&[&[OMEGA, C0, C0], &[C0, C1, C0], &[C0, C0, OMEGA]]);
+        let flows: HashSet<Flow> = [flowa.clone(), flowb.clone()].into();
+        let semigroup = FlowSemigroup::compute(&flows);
+        print!("\nsemigroup\n\n{}", semigroup);
+        assert!(semigroup.contains(&flowa));
+        assert!(semigroup.contains(&flowb));
+    }
+
+    #[test]
+    fn test_flow_semigroup_compute3() {
+        let flowa = Flow::from_lines(&[&[OMEGA, C1, C0], &[OMEGA, C0, C1], &[C0, C0, OMEGA]]);
+        let flowb = Flow::from_lines(&[&[OMEGA, C0, C0], &[C0, C1, C0], &[C0, C0, OMEGA]]);
+        let flows: HashSet<Flow> = [flowa.clone(), flowb.clone()].into();
+        let semigroup = FlowSemigroup::compute(&flows);
+        print!("\nsemigroup\n\n{}", semigroup);
+        assert!(semigroup.contains(&flowa));
+        assert!(semigroup.contains(&flowb));
     }
 }

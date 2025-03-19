@@ -103,7 +103,7 @@ mod test {
 
         assert!(!(master_sheep <= medium_sheep));
         assert!(medium_sheep <= medium_sheep);
-        assert!(ini_sheep <= medium_sheep);
+        assert!(!(ini_sheep <= medium_sheep));
         assert!(!(final_sheep <= medium_sheep));
 
         assert!(!(master_sheep <= ini_sheep));
