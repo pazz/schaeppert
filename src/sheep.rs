@@ -58,8 +58,8 @@ impl Sheep {
     #[allow(dead_code)]
     pub(crate) fn from_non_zero_coefs(
         dim: usize,
-        partition: &Vec<u16>,
-        predecessors: &Vec<usize>,
+        partition: &[u16],
+        predecessors: &[usize],
     ) -> Sheep {
         let mut result = vec![Coef::Value(0); dim];
         for (i, &x) in predecessors.iter().enumerate() {

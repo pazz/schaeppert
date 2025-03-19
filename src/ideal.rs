@@ -50,7 +50,7 @@ impl Ideal {
         if self.0.is_empty() {
             return Ideal::new();
         }
-        let dim = self.0.iter().next().unwrap().len().clone();
+        let dim = self.0.iter().next().unwrap().len();
         let mut result = Ideal::from_vec(
             &self
                 .0

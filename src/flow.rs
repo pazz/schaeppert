@@ -21,7 +21,7 @@ pub struct Flow {
 impl Mul for &Flow {
     type Output = Flow;
     fn mul(self, other: &Flow) -> Flow {
-        self.product(&other)
+        self.product(other)
     }
 }
 
