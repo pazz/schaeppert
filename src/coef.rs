@@ -13,20 +13,46 @@ pub const ZERO: Coef = Coef::Value(0);
 pub const ONE: Coef = Coef::Value(1);
 pub const OMEGA: Coef = Coef::Omega;
 
-impl Add for Coef {
+impl Add for &Coef {
     type Output = Coef;
 
     fn add(self, other: Self) -> Self::Output {
         match (self, other) {
-            (OMEGA, _) | (_, OMEGA) => OMEGA,
+            (Coef::Omega, _) | (_, Coef::Omega) => OMEGA,
             (Coef::Value(x), Coef::Value(y)) => Coef::Value(x + y),
         }
     }
 }
 
+#[allow(clippy::op_ref)]
+impl Add for Coef {
+    type Output = Coef;
+    fn add(self, other: Self) -> Self::Output {
+        &self + &other
+    }
+}
+
+impl<'a> Sum<&'a Coef> for Coef {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a Coef>,
+    {
+        let mut iter = iter;
+        iter.try_fold(0, |sum, &x| match x {
+            Coef::Omega => Err(Coef::Omega),
+            Coef::Value(v) => Ok(sum + v),
+        })
+        .map_or(Coef::Omega, Coef::Value)
+    }
+}
+
 impl Sum for Coef {
-    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Coef::Value(0), |acc, x| acc + x)
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = Self>,
+    {
+        let mut iter = iter;
+        iter.by_ref().sum()
     }
 }
 

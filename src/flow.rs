@@ -86,7 +86,7 @@ impl Flow {
             if column.iter().any(|x| *x == OMEGA) {
                 result[j] = OMEGA;
             } else {
-                result[j] = column.iter().copied().sum();
+                result[j] = column.iter().sum();
             }
         }
         result
