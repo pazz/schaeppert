@@ -57,7 +57,7 @@ impl Flow {
             if line.iter().any(|x| *x == OMEGA) {
                 result[i] = OMEGA;
             } else {
-                let sum = line.iter().copied().sum();
+                let sum = line.iter().sum();
                 result[i] = match sum {
                     Coef::Omega => OMEGA,
                     Coef::Value(x) => {

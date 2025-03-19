@@ -52,7 +52,11 @@ impl Sum for Coef {
         I: Iterator<Item = Self>,
     {
         let mut iter = iter;
-        iter.by_ref().sum()
+        iter.try_fold(0, |sum, x| match x {
+            Coef::Omega => Err(Coef::Omega),
+            Coef::Value(v) => Ok(sum + v),
+        })
+        .map_or(Coef::Omega, Coef::Value)
     }
 }
 
@@ -81,8 +85,10 @@ mod test {
     #[test]
     fn sum() {
         let vec = [ONE, ONE, ONE];
+        assert_eq!(vec.iter().sum::<Coef>(), Coef::Value(3));
         assert_eq!(vec.iter().copied().sum::<Coef>(), Coef::Value(3));
         let vec = [ONE, OMEGA, ONE];
+        assert_eq!(vec.iter().sum::<Coef>(), OMEGA);
         assert_eq!(vec.iter().copied().sum::<Coef>(), OMEGA);
     }
 
