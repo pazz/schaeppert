@@ -1,5 +1,5 @@
+use crate::coef::C0;
 use crate::coef::OMEGA;
-use crate::coef::ZERO;
 use crate::flow;
 use crate::graph::Graph;
 use crate::nfa;
@@ -46,7 +46,7 @@ pub fn solve(nfa: &nfa::Nfa) -> Solution {
 }
 
 fn get_omega_sheep(dim: usize, states: HashSet<usize>) -> Sheep {
-    let mut sheep = Sheep::new(dim, ZERO);
+    let mut sheep = Sheep::new(dim, C0);
     for state in states {
         sheep.set(state, OMEGA);
     }

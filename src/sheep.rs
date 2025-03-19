@@ -47,14 +47,14 @@ impl fmt::Display for Sheep {
 mod test {
     use super::*;
     use crate::coef::OMEGA;
-    use crate::coef::ZERO;
+    use crate::coef::C0;
 
     #[test]
     fn is_below() {
         let master_sheep = Sheep(vec![OMEGA, OMEGA]);
         let medium_sheep = Sheep(vec![Coef::Value(7), Coef::Value(7)]);
-        let ini_sheep = Sheep(vec![OMEGA, ZERO]);
-        let final_sheep = Sheep(vec![ZERO, OMEGA]);
+        let ini_sheep = Sheep(vec![OMEGA, C0]);
+        let final_sheep = Sheep(vec![C0, OMEGA]);
 
         assert!(master_sheep.is_below(&master_sheep));
         assert!(medium_sheep.is_below(&master_sheep));

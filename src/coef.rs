@@ -8,9 +8,13 @@ pub enum Coef {
     Omega,
 }
 
-pub const ZERO: Coef = Coef::Value(0);
+pub const C0: Coef = Coef::Value(0);
 #[allow(dead_code)]
-pub const ONE: Coef = Coef::Value(1);
+pub const C1: Coef = Coef::Value(1);
+#[allow(dead_code)]
+pub const C2: Coef = Coef::Value(2);
+#[allow(dead_code)]
+pub const C3: Coef = Coef::Value(3);
 pub const OMEGA: Coef = Coef::Omega;
 
 impl Add for &Coef {
@@ -77,27 +81,27 @@ mod test {
 
     #[test]
     fn add() {
-        assert_eq!(ONE + ONE, Coef::Value(2));
-        assert_eq!(OMEGA + ONE, OMEGA);
+        assert_eq!(C1 + C1, Coef::Value(2));
+        assert_eq!(OMEGA + C1, OMEGA);
         assert_eq!(OMEGA + OMEGA, OMEGA);
     }
 
     #[test]
     fn sum() {
-        let vec = [ONE, ONE, ONE];
+        let vec = [C1, C1, C1];
         assert_eq!(vec.iter().sum::<Coef>(), Coef::Value(3));
         assert_eq!(vec.iter().copied().sum::<Coef>(), Coef::Value(3));
-        let vec = [ONE, OMEGA, ONE];
+        let vec = [C1, OMEGA, C1];
         assert_eq!(vec.iter().sum::<Coef>(), OMEGA);
         assert_eq!(vec.iter().copied().sum::<Coef>(), OMEGA);
     }
 
     #[test]
     fn cmp() {
-        assert!(ONE < OMEGA);
-        assert!(ZERO < ONE);
-        assert!(ZERO < OMEGA);
-        assert!(ONE < OMEGA);
-        assert!(ONE < Coef::Value(2));
+        assert!(C1 < OMEGA);
+        assert!(C0 < C1);
+        assert!(C0 < OMEGA);
+        assert!(C1 < OMEGA);
+        assert!(C1 < Coef::Value(2));
     }
 }
