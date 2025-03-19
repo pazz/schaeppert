@@ -55,6 +55,7 @@ impl Sheep {
         )
     }
 
+    #[allow(dead_code)]
     pub(crate) fn from_non_zero_coefs(
         dim: usize,
         partition: &Vec<u16>,
