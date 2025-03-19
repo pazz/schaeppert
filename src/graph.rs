@@ -21,8 +21,8 @@ impl Graph {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn from_vec(to_vec: Vec<(usize, usize)>) -> Graph {
-        Graph(to_vec.into_iter().collect())
+    pub(crate) fn from_vec(vec: Vec<(usize, usize)>) -> Graph {
+        Graph(vec.into_iter().collect())
     }
 
     //todo: optimize data structure to get constant time

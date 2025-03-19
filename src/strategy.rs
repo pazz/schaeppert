@@ -1,4 +1,5 @@
 use crate::coef::OMEGA;
+use crate::graph::Graph;
 use crate::ideal::Ideal;
 use crate::nfa;
 use crate::sheep::Sheep;
@@ -12,7 +13,7 @@ pub struct Strategy(HashMap<nfa::Letter, Ideal>);
 impl Strategy {
     pub fn get_maximal_strategy(dim: usize, letters: &[nfa::Letter]) -> Self {
         let sheep = Sheep::new(dim, OMEGA);
-        let maximal_ideal = Ideal::from_vec([sheep].into());
+        let maximal_ideal = Ideal::from_vec(&[sheep]);
         Strategy(
             letters
                 .iter()
@@ -25,8 +26,19 @@ impl Strategy {
         self.0.values().any(|ideal| ideal.contains(source))
     }
 
-    pub(crate) fn restrict_to_ideal(&self, _winning_ideal: Ideal) -> bool {
-        todo!()
+    pub(crate) fn restrict_to(
+        &mut self,
+        safe: Ideal,
+        edges_per_letter: &HashMap<nfa::Letter, Graph>,
+    ) -> bool {
+        let mut result = false;
+        for (a, ideal) in self.0.iter_mut() {
+            let edges = edges_per_letter.get(a).unwrap();
+            //compute the subset of safe which gurantees to stay in safe when playing the letter
+            let very_safe = safe.pre_image(edges);
+            result |= ideal.restrict_to(&very_safe);
+        }
+        result
     }
 
     pub(crate) fn iter(&self) -> impl Iterator<Item = (&nfa::Letter, &Ideal)> {
@@ -43,4 +55,28 @@ impl fmt::Display for Strategy {
             .collect();
         write!(f, "{}", vec.join("\n"))
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::sheep::Sheep;
+
+    #[test]
+    fn test_strategy() {
+        let dim = 2;
+        let letters = ['a', 'b'];
+        let strategy = Strategy::get_maximal_strategy(dim, &letters);
+        let source = Sheep::new(dim, OMEGA);
+        assert!(strategy.is_defined_on(&source));
+        assert_eq!(
+            strategy.0,
+            HashMap::from([
+                ('a', Ideal::from_vec(&[Sheep::from_vec(vec![OMEGA, OMEGA])])),
+                ('b', Ideal::from_vec(&[Sheep::from_vec(vec![OMEGA, OMEGA])]))
+            ])
+        );
+    }
+
+    //test restrict to_ideal
 }

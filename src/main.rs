@@ -3,6 +3,7 @@ mod flow;
 mod graph;
 mod ideal;
 mod nfa;
+mod partitions;
 mod semigroup;
 mod sheep;
 mod solver;

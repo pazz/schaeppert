@@ -42,8 +42,8 @@ impl Nfa {
     }
 
     pub fn add_transition(&mut self, from: State, to: State, label: char) {
-        self._check_state(from);
-        self._check_state(to);
+        self.check_state(from);
+        self.check_state(to);
         self.transitions.push(Transition {
             from,
             letter: label,
@@ -51,17 +51,17 @@ impl Nfa {
         });
     }
 
-    fn _check_state(&self, q: State) {
+    fn check_state(&self, q: State) {
         assert!(q < self.nb_states, "State {} is not in the NFA", q)
     }
 
     pub fn add_initial(&mut self, q: State) {
-        self._check_state(q);
+        self.check_state(q);
         self.initial.insert(q);
     }
 
     pub fn add_final(&mut self, q: State) {
-        self._check_state(q);
+        self.check_state(q);
         self.accepting.insert(q);
     }
 
@@ -77,8 +77,8 @@ impl Nfa {
         self.initial.clone()
     }
 
-    pub(crate) fn final_states(&self) -> HashSet<State> {
-        self.accepting.clone()
+    pub(crate) fn final_states(&self) -> Vec<State> {
+        self.accepting.iter().cloned().collect()
     }
 }
 

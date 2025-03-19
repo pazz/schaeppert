@@ -1,8 +1,8 @@
 use crate::flow;
-use crate::flow::FlowTrait;
 use crate::ideal;
-use crate::sheep;
+use crate::nfa;
 use std::collections::HashSet; // for distinct method
+use std::collections::VecDeque;
 use std::fmt;
 
 pub struct FlowSemigroup {
@@ -26,37 +26,34 @@ impl FlowSemigroup {
     }
 
     fn close_by_product_and_iteration(&mut self) {
-        let mut fresh: HashSet<flow::Flow> = self.flows.clone();
+        let mut fresh: VecDeque<flow::Flow> = self.flows.iter().cloned().collect();
         while !fresh.is_empty() {
-            let flow = fresh.iter().next().unwrap().clone();
-            fresh.remove(&flow);
-            if self.flows.contains(&flow) {
+            let flow = fresh.pop_front().unwrap();
+            if self.flows.iter().any(|other| &flow <= other) {
                 continue;
             }
-            fresh.insert(flow.iteration());
+            fresh.push_back(flow.iteration());
             {
-                let right_products = self.flows.iter().map(|other| flow.product(other));
-                let left_products = self.flows.iter().map(|other| other.product(&flow));
+                let right_products = self.flows.iter().map(|other| &flow * other);
+                let left_products = self.flows.iter().map(|other| other * &flow);
                 let products: HashSet<flow::Flow> = left_products.chain(right_products).collect();
                 for product in products {
                     let added = self.flows.insert(product.clone());
                     if added {
-                        fresh.insert(product);
+                        fresh.push_back(product);
                     }
                 }
             }
         }
     }
 
-    pub fn get_winning_ideal(&self, target: &sheep::Sheep) -> ideal::Ideal {
-        let roundup = true;
+    pub fn get_winning_ideal(&self, target: &[nfa::State]) -> ideal::Ideal {
         ideal::Ideal::from_vec(
-            self.flows
+            &self
+                .flows
                 .iter()
-                .map(|flow| (flow, sheep::Sheep::from_vec(flow.im())))
-                .filter(|(_, im)| im.is_below(target))
-                .map(|(flow, _)| sheep::Sheep::from_vec(flow.dom(roundup)))
-                .collect(),
+                .map(|flow| flow.pre_image(target))
+                .collect::<Vec<_>>(),
         )
     }
 }

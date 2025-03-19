@@ -20,21 +20,21 @@ pub struct Solution {
 pub fn solve(nfa: &nfa::Nfa) -> Solution {
     let dim = nfa.nb_states();
     let source = get_omega_sheep(dim, nfa.initial_states());
-    let target = get_omega_sheep(dim, nfa.final_states());
+    let final_states = nfa.final_states();
 
     let edges = get_edges(nfa);
-    let strategy = Strategy::get_maximal_strategy(dim, &nfa.get_letters());
+    let mut strategy = Strategy::get_maximal_strategy(dim, &nfa.get_letters());
     let mut result = true;
 
     while result {
         //convert strategy to flows
         let action_flows = compute_action_flows(&strategy, &edges);
-        debug!("\nAction flows:\n{}", _flows_to_string(&action_flows));
+        debug!("\nAction flows:\n{}", flows_to_string(&action_flows));
         let semigroup = semigroup::FlowSemigroup::compute(&action_flows);
         debug!("Semigroup: {}", semigroup);
-        let winning_ideal = semigroup.get_winning_ideal(&target);
+        let winning_ideal = semigroup.get_winning_ideal(&final_states);
         debug!("Winning ideal: {}", winning_ideal);
-        let changed = strategy.restrict_to_ideal(winning_ideal);
+        let changed = strategy.restrict_to(winning_ideal, &edges);
         if !changed {
             break;
         }
@@ -78,7 +78,7 @@ fn compute_action_flows(
     action_flows
 }
 
-fn _flows_to_string(flows: &HashSet<flow::Flow>) -> String {
+fn flows_to_string(flows: &HashSet<flow::Flow>) -> String {
     let mut vec: Vec<String> = flows.iter().map(|x| x.to_string()).collect();
     vec.sort();
     vec.join("\r\n")

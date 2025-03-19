@@ -1,49 +1,98 @@
 use crate::coef::{Coef, C0, C1, OMEGA};
 use crate::graph::Graph;
+use crate::nfa;
+use crate::partitions;
 use crate::sheep;
+use crate::sheep::Sheep;
 use log::debug;
 use std::fmt;
+use std::ops::Mul;
 use std::{collections::HashSet, vec::Vec};
 
 pub type Domain = Vec<Coef>;
-pub type Image = Vec<Coef>;
 
-#[derive(Eq, PartialEq, Hash, Clone, Debug)]
+#[derive(Eq, PartialEq, PartialOrd, Hash, Clone, Debug)]
 pub struct Flow {
     pub dim: usize,
     //size is dim * dim
     entries: Vec<Coef>,
 }
 
-pub trait FlowTrait {
-    fn dom(&self, roundup: bool) -> Domain;
-    fn im(&self) -> Image;
-    fn product(&self, other: &Flow) -> Flow;
-    fn iteration(&self) -> Flow;
+impl Mul for &Flow {
+    type Output = Flow;
+    fn mul(self, other: &Flow) -> Flow {
+        self.product(&other)
+    }
 }
 
-impl FlowTrait for Flow {
-    fn dom(&self, roundup: bool) -> Domain {
-        Self::_dom(self.dim, &self.entries, roundup)
-    }
-
-    fn im(&self) -> Image {
-        Self::_im(self.dim, &self.entries)
-    }
-
-    //product of two flows
-    fn product(&self, other: &Flow) -> Flow {
-        let dim = self.dim;
-        let entries = Self::_product(&self.entries, &other.entries, dim);
-        Flow { dim, entries }
-    }
-
-    fn iteration(&self) -> Flow {
-        Self::_iteration(&self.entries, self.dim)
+impl Mul for Flow {
+    type Output = Flow;
+    fn mul(self, other: Flow) -> Flow {
+        &self * &other
     }
 }
 
 impl Flow {
+    pub fn product(&self, other: &Flow) -> Flow {
+        let entries = &self.entries;
+        let other_entries = &other.entries;
+        let dim = self.dim;
+        let mut result = vec![C0; dim * dim];
+        for i in 0..dim {
+            for j in 0..dim {
+                result[i * dim + j] = (0..dim)
+                    .map(|k| std::cmp::min(entries[i * dim + k], other_entries[k * dim + j]))
+                    .max()
+                    .unwrap();
+            }
+        }
+        Flow {
+            dim,
+            entries: result,
+        }
+    }
+
+    pub fn iteration(&self) -> Flow {
+        let entries = &self.entries;
+        let dim = self.dim;
+        let mut e = self.idempotent();
+        for s0 in 0..dim {
+            for t0 in 0..dim {
+                if Self::is_1(entries, s0, t0, dim) {
+                    debug!("processing ? -- {} -- {} -- ?", s0, t0);
+                    for s in 0..dim {
+                        if Self::is_omega(entries, s, s0, dim) {
+                            for t in 0..dim {
+                                if Self::is_omega(entries, t0, t, dim) {
+                                    debug!("found {} -- {} -- {} -- {}", s, s0, t0, t);
+                                    e.entries[s * dim + t] = OMEGA;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Flow {
+            dim,
+            entries: e.entries,
+        }
+    }
+
+    pub fn pre_image(&self, target: &[nfa::State]) -> Sheep {
+        return Sheep::from_vec(
+            (0..self.dim)
+                .map(|i| {
+                    target
+                        .iter()
+                        .map(|&j| Self::get(&self.entries, i, j, self.dim))
+                        .max()
+                        .unwrap()
+                })
+                .collect(),
+        );
+    }
+
     #[allow(dead_code)]
     pub fn from_entries(dim: usize, entries: &[Coef]) -> Flow {
         if entries.len() != dim * dim {
@@ -71,120 +120,6 @@ impl Flow {
         )
     }
 
-    fn _dom(dim: usize, entries: &[Coef], roundup: bool) -> Domain {
-        if entries.len() != dim * dim {
-            panic!("Invalid number of entries");
-        }
-        let mut result = vec![C0; dim];
-        if dim == 0 {
-            return result;
-        }
-        for i in 0..dim {
-            let line = &entries[i * dim..(i + 1) * dim];
-            if line.iter().any(|x| *x == OMEGA) {
-                result[i] = OMEGA;
-            } else {
-                let sum = line.iter().sum();
-                result[i] = match sum {
-                    Coef::Omega => OMEGA,
-                    Coef::Value(x) => {
-                        if roundup && x > dim as u16 {
-                            OMEGA
-                        } else {
-                            Coef::Value(x)
-                        }
-                    }
-                }
-            }
-        }
-        result
-    }
-
-    fn _im(dim: usize, entries: &[Coef]) -> Image {
-        if entries.len() != dim * dim {
-            panic!("Invalid number of entries");
-        }
-        let mut result = vec![C0; dim];
-        if dim == 0 {
-            return result;
-        }
-        for j in 0..dim {
-            let column: Vec<Coef> = (0..dim).map(|i| entries[i + j * dim]).collect();
-            if column.iter().any(|x| *x == OMEGA) {
-                result[j] = OMEGA;
-            } else {
-                result[j] = column.iter().sum();
-            }
-        }
-        result
-    }
-
-    fn _product(entries: &[Coef], other_entries: &[Coef], dim: usize) -> Vec<Coef> {
-        let mut result = vec![C0; dim * dim];
-        for i in 0..dim {
-            for j in 0..dim {
-                result[i * dim + j] = (0..dim)
-                    .map(|k| std::cmp::min(entries[i * dim + k], other_entries[k * dim + j]))
-                    .max()
-                    .unwrap();
-            }
-        }
-        result
-    }
-
-    //iteration of a fl
-    pub fn _idempotent(entries: &[Coef], dim: usize) -> Flow {
-        let mut result: Vec<Coef> = entries.into();
-        loop {
-            let result_squared = Self::_product(&result, &result, dim);
-            if result == result_squared {
-                break;
-            }
-            result = result_squared;
-        }
-        Flow {
-            dim,
-            entries: result,
-        }
-    }
-
-    pub fn _coef(entries: &[Coef], i: usize, j: usize, dim: usize) -> Coef {
-        entries[i * dim + j]
-    }
-
-    pub fn _is_1(entries: &[Coef], i: usize, j: usize, dim: usize) -> bool {
-        entries[i * dim + j] == C1
-    }
-
-    pub fn _is_omega(entries: &[Coef], i: usize, j: usize, dim: usize) -> bool {
-        entries[i * dim + j] == OMEGA
-    }
-
-    pub fn _iteration(entries: &[Coef], dim: usize) -> Flow {
-        let mut e = Self::_idempotent(entries, dim);
-        for s0 in 0..dim {
-            for t0 in 0..dim {
-                if Self::_is_1(entries, s0, t0, dim) {
-                    debug!("processing ? -- {} -- {} -- ?", s0, t0);
-                    for s in 0..dim {
-                        if Self::_is_omega(entries, s, s0, dim) {
-                            for t in 0..dim {
-                                if Self::_is_omega(entries, t0, t, dim) {
-                                    debug!("found {} -- {} -- {} -- {}", s, s0, t0, t);
-                                    e.entries[s * dim + t] = OMEGA;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        Flow {
-            dim,
-            entries: e.entries,
-        }
-    }
-
     //compute all possible flows compatible with this domain and edges
     //there might be choice from small constants: a 5 distributed on 3 edges might lead to (5 + 0 + 0) or (1 + 1+ 3)
     //this is annoyingly exponential and should be stored in the future as a compact representation,
@@ -194,16 +129,16 @@ impl Flow {
     WIP
     */
     pub(crate) fn from_domain_and_edges(domain: &sheep::Sheep, edges: &Graph) -> HashSet<Flow> {
-        println!("Creating flow from domain and edges");
-        println!("domain {}", domain);
-        println!("edges {}", edges);
+        debug!("Creating flow from domain and edges");
+        debug!("domain {}", domain);
+        debug!("edges {}", edges);
 
         let dim = domain.len();
         if edges.iter().any(|f| f.0 >= dim || f.1 >= dim) {
             panic!("Edge out of domain");
         }
-        let lines = Self::_get_lines_vec(domain, edges);
-        Self::_cartesian_product(&lines)
+        let lines = Self::get_lines_vec(domain, edges);
+        Self::cartesian_product(&lines)
             .iter()
             .map(|x| Flow {
                 dim,
@@ -212,15 +147,40 @@ impl Flow {
             .collect()
     }
 
+    //iteration of a fl
+    fn idempotent(&self) -> Flow {
+        let mut result = self.clone();
+        loop {
+            let result_squared = &result * &result;
+            if result == result_squared {
+                break;
+            }
+            result = result_squared;
+        }
+        result
+    }
+
+    fn get(entries: &[Coef], i: usize, j: usize, dim: usize) -> Coef {
+        entries[i * dim + j]
+    }
+
+    fn is_1(entries: &[Coef], i: usize, j: usize, dim: usize) -> bool {
+        entries[i * dim + j] == C1
+    }
+
+    fn is_omega(entries: &[Coef], i: usize, j: usize, dim: usize) -> bool {
+        entries[i * dim + j] == OMEGA
+    }
+
     //takes a vector of vectors of a generic type and computes its cartesain product
-    fn _cartesian_product<T: Clone + Eq + std::hash::Hash>(vectors: &[Vec<T>]) -> HashSet<Vec<T>> {
+    fn cartesian_product<T: Clone + Eq + std::hash::Hash>(vectors: &[Vec<T>]) -> HashSet<Vec<T>> {
         match vectors.len() {
             0 => HashSet::new(),
             1 => vectors[0].iter().map(|x| vec![x.clone()]).collect(),
             _ => {
                 let mut result = HashSet::new();
                 for x in &vectors[0] {
-                    for mut y in Self::_cartesian_product(&vectors[1..]) {
+                    for mut y in Self::cartesian_product(&vectors[1..]) {
                         y.insert(0, x.clone());
                         result.insert(y);
                     }
@@ -230,25 +190,25 @@ impl Flow {
         }
     }
 
-    fn _get_lines_vec(domain: &sheep::Sheep, edges: &Graph) -> Vec<Vec<Domain>> {
+    fn get_lines_vec(domain: &sheep::Sheep, edges: &Graph) -> Vec<Vec<Domain>> {
         let dim = domain.len();
         (0..dim)
             .map(|i| {
                 let out = edges.get_successors(i);
                 let coef = domain.get(i);
-                Self::_get_lines(out, coef, dim)
+                Self::get_lines(out, coef, dim)
             })
             .collect()
     }
 
     //todo cache results
-    fn _get_lines(out: Vec<usize>, coef: Coef, dim: usize) -> Vec<Domain> {
+    fn get_lines(out: Vec<usize>, coef: Coef, dim: usize) -> Vec<Domain> {
         match coef {
             C0 => vec![vec![C0; dim]],
             OMEGA => vec![(0..dim)
                 .map(|i| if out.contains(&i) { OMEGA } else { C0 })
                 .collect()],
-            Coef::Value(x) => Self::_get_partitions(x, out.len())
+            Coef::Value(x) => partitions::get_partitions(x, out.len())
                 .iter()
                 .map(|p| {
                     let mut result = vec![C0; dim];
@@ -258,34 +218,6 @@ impl Flow {
                     result
                 })
                 .collect(),
-        }
-    }
-
-    /* get all partitions of non-negative integers of length len and sum equal to x.
-    E.g. if len = 3 and x = 4 returns [[4,0,0], [3,1,0], [3,0,1], [2,2,0], [2,1,1], ...., [0,0,4]]
-     */
-    fn _get_partitions(x: u16, len: usize) -> Vec<Vec<u16>> {
-        let mut result: Vec<Vec<u16>> = Vec::new();
-        if len > 0 {
-            let mut current = vec![0; len];
-            current[0] = x;
-            Self::_get_partitions_rec(0, &mut current, &mut result);
-        }
-        result
-    }
-
-    fn _get_partitions_rec(start_index: usize, current: &mut Vec<u16>, result: &mut Vec<Vec<u16>>) {
-        result.push(current.clone());
-        if start_index + 1 >= current.len() {
-            return;
-        }
-        while current[start_index] > 0 {
-            current[start_index] -= 1;
-            current[start_index + 1] = current.iter().skip(start_index + 1).sum::<u16>() + 1;
-            (start_index + 2..current.len()).for_each(|i| {
-                current[i] = 0;
-            });
-            Self::_get_partitions_rec(start_index + 1, current, result);
         }
     }
 }
@@ -316,31 +248,12 @@ mod test {
         Flow::from_domain_and_edges(&domain, &edges);
     }
 
-    //test _get_partitions_rec on an example with start_index=0 current= [3,0,0] and result empty
-    #[test]
-    fn get_partitions_rec_test() {
-        let x = 3;
-        let expected = vec![
-            vec![3, 0, 0],
-            vec![2, 1, 0],
-            vec![2, 0, 1],
-            vec![1, 2, 0],
-            vec![1, 1, 1],
-            vec![1, 0, 2],
-            vec![0, 3, 0],
-            vec![0, 2, 1],
-            vec![0, 1, 2],
-            vec![0, 0, 3],
-        ];
-        assert_eq!(Flow::_get_partitions(x, 3), expected);
-    }
-
     #[test]
     fn get_lines_test() {
         let out = vec![0, 1];
         let dim = 3;
         assert_eq!(
-            Flow::_get_lines(out, C3, dim),
+            Flow::get_lines(out, C3, dim),
             vec![
                 vec![C3, C0, C0],
                 vec![C2, C1, C0],
@@ -356,7 +269,7 @@ mod test {
         let coef = Coef::Omega;
         let dim = 3;
         let expected = vec![vec![OMEGA, OMEGA, C0]];
-        assert_eq!(Flow::_get_lines(out, coef, dim), expected);
+        assert_eq!(Flow::get_lines(out, coef, dim), expected);
     }
 
     //test _get_lines_vec on an example with domain=[1,3,omega] and edges=[(0,1),(1,0),(1,1),(2,1),(2,2)]
@@ -374,7 +287,7 @@ mod test {
             ],
             vec![vec![C0, OMEGA, OMEGA]],
         ];
-        let computed = Flow::_get_lines_vec(&domain, &edges);
+        let computed = Flow::get_lines_vec(&domain, &edges);
         //check computed and expected are equal, up to order of elements
         assert_eq!(computed.len(), expected.len());
         assert_eq!(computed[0], expected[0]);
@@ -414,7 +327,6 @@ mod test {
 
     #[test]
     fn idempotent_test1() {
-        let dim = 4;
         let flow = Flow::from_lines(&[
             &[OMEGA, OMEGA, C0, C0],
             &[C0, C0, C1, C0],
@@ -427,12 +339,11 @@ mod test {
             &[C0, C0, C0, C0],
             &[C0, C0, C0, C0],
         ]);
-        assert_eq!(Flow::_idempotent(&flow.entries, dim), expected);
+        assert_eq!(flow.idempotent(), expected);
     }
 
     #[test]
     fn idempotent_test2() {
-        let dim = 4;
         let flow = Flow::from_lines(&[
             &[OMEGA, OMEGA, C0, C0],
             &[C0, C0, C1, C0],
@@ -445,7 +356,7 @@ mod test {
             &[C0, C0, C0, OMEGA],
             &[C0, C0, C0, OMEGA],
         ]);
-        assert_eq!(Flow::_idempotent(&flow.entries, dim), expected);
+        assert_eq!(flow.idempotent(), expected);
     }
 
     //test iteration on the flow OMEGA 1 0 OMEGA
@@ -511,5 +422,28 @@ mod test {
             &[C0, C0, C0, OMEGA],
         ]);
         assert_eq!(flow.iteration(), expected);
+    }
+
+    //tests preimage
+    #[test]
+    fn pre_image() {
+        let flow = Flow::from_lines(&[
+            &[OMEGA, OMEGA, C0, C0],
+            &[C0, OMEGA, C1, C2],
+            &[C0, C0, OMEGA, OMEGA],
+            &[C0, C0, C0, OMEGA],
+        ]);
+        assert_eq!(
+            flow.pre_image(&[0]),
+            Sheep::from_vec(vec![OMEGA, C0, C0, C0])
+        );
+        assert_eq!(
+            flow.pre_image(&[2, 3]),
+            Sheep::from_vec(vec![C0, C2, OMEGA, OMEGA])
+        );
+        assert_eq!(
+            flow.pre_image(&[1, 2]),
+            Sheep::from_vec(vec![OMEGA, OMEGA, OMEGA, C0])
+        );
     }
 }
