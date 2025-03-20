@@ -1,3 +1,5 @@
+use log::debug;
+
 use crate::coef::{Coef, OMEGA};
 use crate::sheep::Sheep;
 use crate::{coef, partitions};
@@ -8,7 +10,6 @@ pub struct Ideal(HashSet<Sheep>);
 
 impl PartialEq for Ideal {
     fn eq(&self, other: &Self) -> bool {
-        //print!("{}\n{}\n", self, other);
         self.is_contained_in(other) && other.is_contained_in(self)
     }
 }
@@ -91,8 +92,8 @@ impl Ideal {
             .collect::<Vec<_>>();
 
         //print max_finite_coords and is_omega_possible
-        print!("preimage of {}\n by\n{}\n", self, edges);
-        print!("{:?}\n{:?}\n", max_finite_coordsi, is_omega_possible);
+        debug!("preimage of {}\n by\n{}\n", self, edges);
+        debug!("{:?}\n{:?}\n", max_finite_coordsi, is_omega_possible);
 
         let possible_coefs = (0..dim)
             .map(|i| {
@@ -114,20 +115,20 @@ impl Ideal {
                 }
             })
             .collect::<Vec<_>>();
-        print!("max_finite_coords: {:?}\n", max_finite_coordsi);
-        print!("is_omega_possible: {:?}\n", is_omega_possible);
-        print!("possible_coefs: {:?}\n", possible_coefs);
+        //debug!("max_finite_coords: {:?}\n", max_finite_coordsi);
+        //debug!("is_omega_possible: {:?}\n", is_omega_possible);
+        //debug!("possible_coefs: {:?}\n", possible_coefs);
 
         let mut result = Ideal::new();
         for candidate in partitions::cartesian_product(&possible_coefs) {
-            print!("candidate: {:?}\n", candidate);
+            //debug!("candidate: {:?}\n", candidate);
             if self.is_safe(&candidate, edges) {
-                print!("\t...ok\n");
+                //debug!("\t...ok\n");
                 result.insert(&Sheep::from_vec(candidate));
             }
         }
         result.minimize();
-        print!("result {}\n", result);
+        debug!("result {}\n", result);
         result
     }
 
