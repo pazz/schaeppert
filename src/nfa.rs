@@ -82,19 +82,13 @@ impl Nfa {
     }
 
     pub(crate) fn is_complete(&self) -> bool {
-        for letter in self.get_letters() {
-            for state in 0..self.nb_states {
-                if self
-                    .transitions
+        self.get_letters().iter().all(|letter| {
+            (0..self.nb_states).all(|state| {
+                self.transitions
                     .iter()
-                    .find(|t| t.from == state && t.letter == letter)
-                    .is_none()
-                {
-                    return false;
-                }
-            }
-        }
-        true
+                    .any(|t| t.from == state && t.letter == *letter)
+            })
+        })
     }
 
     pub(crate) fn get_nfa(name: &str) -> Nfa {

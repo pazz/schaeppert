@@ -12,8 +12,7 @@ pub struct Strategy(HashMap<nfa::Letter, Ideal>);
 
 impl Strategy {
     pub fn get_maximal_strategy(dim: usize, letters: &[nfa::Letter]) -> Self {
-        let sheep = Sheep::new(dim, OMEGA);
-        let maximal_ideal = Ideal::from_vec(&[sheep]);
+        let maximal_ideal = Ideal::from_vecs(&[&vec![OMEGA; dim]]);
         Strategy(
             letters
                 .iter()
@@ -72,8 +71,8 @@ mod tests {
         assert_eq!(
             strategy.0,
             HashMap::from([
-                ('a', Ideal::from_vec(&[Sheep::from_vec(vec![OMEGA, OMEGA])])),
-                ('b', Ideal::from_vec(&[Sheep::from_vec(vec![OMEGA, OMEGA])]))
+                ('a', Ideal::from_vecs(&[&[OMEGA, OMEGA]])),
+                ('b', Ideal::from_vecs(&[&[OMEGA, OMEGA]]))
             ])
         );
     }

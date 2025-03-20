@@ -104,13 +104,8 @@ impl FlowSemigroup {
             if to_remove.contains(flow) {
                 continue;
             }
-            let upper_bound = self.flows.iter().filter(|other| flow < other).next();
-            match upper_bound {
-                Some(upper_bound) => {
-                    debug!("Removing\n{}\nwhich is covered by\n{}\n", flow, upper_bound);
-                    to_remove.insert(flow.clone());
-                }
-                None => {}
+            if self.flows.iter().any(|other| flow < other) {
+                to_remove.insert(flow.clone());
             }
         }
         for flow in to_remove.iter() {

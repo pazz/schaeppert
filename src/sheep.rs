@@ -69,7 +69,7 @@ impl Sheep {
         Sheep(result)
     }
 
-    pub(crate) fn all_omega(&self, succ: &Vec<usize>) -> bool {
+    pub(crate) fn all_omega(&self, succ: &[usize]) -> bool {
         succ.iter().all(|&i| self.get(i) == OMEGA)
     }
 }

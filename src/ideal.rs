@@ -23,6 +23,7 @@ impl Ideal {
         Ideal(w.iter().cloned().collect())
     }
 
+    #[allow(dead_code)]
     pub(crate) fn from_vecs(w: &[&[Coef]]) -> Self {
         Ideal(w.iter().map(|&v| Sheep::from_vec(v.to_vec())).collect())
     }
@@ -175,7 +176,8 @@ impl Ideal {
                     choice
                         .iter()
                         .enumerate()
-                        .filter_map(|(i0, &j0)| (j == j0).then(|| candidate.get(i0).unwrap()))
+                        .filter(|(_, &j0)| j == j0)
+                        .filter_map(|(i0, _)| candidate.get(i0))
                         .sum()
                 })
                 .collect();
@@ -221,16 +223,9 @@ mod test {
     //test equality
     #[test]
     fn order() {
-        let sheep0 = Sheep::from_vec(vec![C0, C1, C2, OMEGA]);
-        let sheep1 = Sheep::from_vec(vec![OMEGA, C2, C1, C0]);
-        let ideal0 = Ideal::from_vec(&[sheep0, sheep1]);
-
-        let sheep2 = Sheep::from_vec(vec![OMEGA, C1, C2, OMEGA]);
-        let sheep3 = Sheep::from_vec(vec![OMEGA, C2, C1, OMEGA]);
-        let ideal1 = Ideal::from_vec(&[sheep2, sheep3]);
-
-        let sheep4 = Sheep::from_vec(vec![OMEGA, C2, C2, OMEGA]);
-        let ideal2 = Ideal::from_vec(&[sheep4]);
+        let ideal0 = Ideal::from_vecs(&[&[C0, C1, C2, OMEGA], &[OMEGA, C2, C1, C0]]);
+        let ideal1 = Ideal::from_vecs(&[&[OMEGA, C1, C2, OMEGA], &[OMEGA, C2, C1, OMEGA]]);
+        let ideal2 = Ideal::from_vecs(&[&[OMEGA, C2, C2, OMEGA]]);
 
         assert!(ideal0.is_contained_in(&ideal1));
         assert!(ideal1.is_contained_in(&ideal2));
@@ -239,17 +234,9 @@ mod test {
 
     #[test]
     fn restrict_to() {
-        let sheep0 = Sheep::from_vec(vec![C0, C1, C2, OMEGA]);
-        let sheep1 = Sheep::from_vec(vec![OMEGA, C2, C1, C0]);
-        let mut ideal0 = Ideal::from_vec(&[sheep0, sheep1]);
-
-        let sheep2 = Sheep::from_vec(vec![OMEGA, C1, C2, OMEGA]);
-        let sheep3 = Sheep::from_vec(vec![OMEGA, C2, C1, OMEGA]);
-        let mut ideal1 = Ideal::from_vec(&[sheep2, sheep3]);
-
-        let sheep4 = Sheep::from_vec(vec![C1, OMEGA, C1, C2]);
-        let sheep5 = Sheep::from_vec(vec![C2, OMEGA, C1, C1]);
-        let ideal2 = Ideal::from_vec(&[sheep4, sheep5]);
+        let mut ideal0 = Ideal::from_vecs(&[&[C0, C1, C2, OMEGA], &[OMEGA, C2, C1, C0]]);
+        let mut ideal1 = Ideal::from_vecs(&[&[OMEGA, C1, C2, OMEGA], &[OMEGA, C2, C1, OMEGA]]);
+        let ideal2 = Ideal::from_vecs(&[&[C1, OMEGA, C1, C2], &[C2, OMEGA, C1, C1]]);
 
         let ideal0original = ideal0.clone();
         let changed0 = ideal0.restrict_to(&ideal1);
@@ -262,26 +249,19 @@ mod test {
         assert!(ideal1 != ideal1original);
         assert_eq!(
             ideal1,
-            Ideal::from_vec(&[
-                Sheep::from_vec(vec![C2, C2, C1, C1]),
-                Sheep::from_vec(vec![C1, C2, C1, C2])
-            ])
+            Ideal::from_vecs(&[&[C2, C2, C1, C1], &[C1, C2, C1, C2]])
         );
         assert_eq!(
             ideal1,
-            Ideal::from_vec(&[
-                Sheep::from_vec(vec![C2, C2, C1, C1]),
-                Sheep::from_vec(vec![C1, C1, C1, C2]),
-                Sheep::from_vec(vec![C1, C2, C1, C2])
-            ])
+            Ideal::from_vecs(&[&[C2, C2, C1, C1], &[C1, C1, C1, C2], &[C1, C2, C1, C2]])
         );
         assert_eq!(
             ideal1,
-            Ideal::from_vec(&[
-                Sheep::from_vec(vec![C1, C2, C1, C2]),
-                Sheep::from_vec(vec![C2, C2, C1, C1]),
-                Sheep::from_vec(vec![C1, C1, C1, C2]),
-                Sheep::from_vec(vec![C2, C1, C1, C1]),
+            Ideal::from_vecs(&[
+                &[C1, C2, C1, C2],
+                &[C2, C2, C1, C1],
+                &[C1, C1, C1, C2],
+                &[C2, C1, C1, C1],
             ])
         );
     }
@@ -291,10 +271,7 @@ mod test {
     fn is_safe() {
         /*Self::is_safe(&candidate, edges, sheep) */
         let edges = crate::graph::Graph::from_vec(vec![(0, 1), (0, 2)]);
-        let sheep0 = Sheep::from_vec(vec![C0, C1, C0]);
-        let sheep1 = Sheep::from_vec(vec![C0, C0, C1]);
-        let ideal = Ideal::from_vec(&[sheep0, sheep1]);
-
+        let ideal = Ideal::from_vecs(&[&[C0, C1, C0], &[C0, C0, C1]]);
         let candidate = vec![C1, C0, C0];
         assert!(ideal.is_safe(&candidate, &edges));
     }
@@ -305,7 +282,6 @@ mod test {
         /*Self::is_safe(&candidate, edges, sheep) */
         let edges = crate::graph::Graph::from_vec(vec![(0, 1), (0, 2)]);
         let ideal = Ideal::from_vecs(&[&[C0, c4, C0], &[C0, C0, c4]]);
-
         let candidate = vec![c4, C0, C0];
         assert!(ideal.is_safe(&candidate, &edges));
     }
@@ -319,10 +295,7 @@ mod test {
         let pre_image0 = ideal0.pre_image(&edges);
         assert_eq!(
             pre_image0,
-            Ideal::from_vec(&[
-                Sheep::from_vec(vec![C0, C1, C1, OMEGA]),
-                Sheep::from_vec(vec![C0, C0, C2, OMEGA]),
-            ])
+            Ideal::from_vecs(&[&[C0, C1, C1, OMEGA], &[C0, C0, C2, OMEGA]]),
         );
     }
 
@@ -345,15 +318,8 @@ mod test {
     #[test]
     fn pre_image2() {
         let edges = crate::graph::Graph::from_vec(vec![(0, 1), (0, 2)]);
-
-        let sheep0 = Sheep::from_vec(vec![C0, C0, OMEGA]);
-        let sheep1 = Sheep::from_vec(vec![C0, OMEGA, C0]);
-        let ideal0 = Ideal::from_vec(&[sheep0, sheep1]);
-
+        let ideal0 = Ideal::from_vecs(&[&[C0, C0, OMEGA], &[C0, OMEGA, C0]]);
         let pre_image0 = ideal0.pre_image(&edges);
-        assert_eq!(
-            pre_image0,
-            Ideal::from_vec(&[Sheep::from_vec(vec![C1, OMEGA, OMEGA]),])
-        );
+        assert_eq!(pre_image0, Ideal::from_vecs(&[&[C1, OMEGA, OMEGA]]));
     }
 }
