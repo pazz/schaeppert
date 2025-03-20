@@ -58,7 +58,7 @@ impl Ideal {
         let dim = self.dim();
 
         //compute for every j the maximal finite coef appearing at index j, if exists
-        let max_finite_coords = (0..dim)
+        let max_finite_coordsj = (0..dim)
             .map(|j| {
                 self.0
                     .iter()
@@ -70,6 +70,18 @@ impl Ideal {
             })
             .collect::<Vec<_>>();
 
+        let max_finite_coordsi = (0..dim)
+            .map(|i| {
+                {
+                    edges
+                        .get_successors(i)
+                        .iter()
+                        .filter_map(|&j| max_finite_coordsj[j])
+                        .max()
+                }
+            })
+            .collect::<Vec<_>>();
+
         //compute for every i whether omega is possible at i, which happens iff there exists a sheep in the ideal such that all successors lead to omega
         let is_omega_possible = (0..dim)
             .map(|i| {
@@ -78,10 +90,14 @@ impl Ideal {
             })
             .collect::<Vec<_>>();
 
+        //print max_finite_coords and is_omega_possible
+        print!("preimage of {}\n by\n{}\n", self, edges);
+        print!("{:?}\n{:?}\n", max_finite_coordsi, is_omega_possible);
+
         let possible_coefs = (0..dim)
             .map(|i| {
                 match (
-                    max_finite_coords.get(i).unwrap(),
+                    max_finite_coordsi.get(i).unwrap(),
                     is_omega_possible.get(i).unwrap(),
                 ) {
                     (Some(c), false) => (0..(std::cmp::max(*c, 1) + 1))
@@ -98,7 +114,7 @@ impl Ideal {
                 }
             })
             .collect::<Vec<_>>();
-        print!("max_finite_coords: {:?}\n", max_finite_coords);
+        print!("max_finite_coords: {:?}\n", max_finite_coordsi);
         print!("is_omega_possible: {:?}\n", is_omega_possible);
         print!("possible_coefs: {:?}\n", possible_coefs);
 

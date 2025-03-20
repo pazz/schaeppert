@@ -58,7 +58,7 @@ impl FlowSemigroup {
 
             let iteration = flow.iteration();
             if !Self::is_covered(&iteration, &self.flows) {
-                print!("\n\nAdded iteration\n{}", iteration);
+                debug!("\n\nAdded iteration\n{}", iteration);
                 self.flows.insert(iteration.clone());
                 to_process.push_back(iteration);
             } else {
@@ -70,7 +70,7 @@ impl FlowSemigroup {
                 let products: HashSet<flow::Flow> = left_products.chain(right_products).collect();
                 for product in products {
                     if !Self::is_covered(&product, &self.flows) {
-                        print!("\n\nAdded product\n{}", product);
+                        debug!("\n\nAdded product\n{}", product);
                         self.flows.insert(product.clone());
                         to_process.push_back(product);
                     } else {
@@ -96,7 +96,7 @@ impl FlowSemigroup {
     }
 
     fn minimize(&mut self) {
-        print!("Minimizing semigroup");
+        debug!("Minimizing semigroup");
         let before = self.flows.len();
         //debug!("Before minimization\n{}", self);
         let mut to_remove = HashSet::new();
@@ -107,7 +107,7 @@ impl FlowSemigroup {
             let upper_bound = self.flows.iter().filter(|other| flow < other).next();
             match upper_bound {
                 Some(upper_bound) => {
-                    print!("Removing\n{}\nwhich is covered by\n{}\n", flow, upper_bound);
+                    debug!("Removing\n{}\nwhich is covered by\n{}\n", flow, upper_bound);
                     to_remove.insert(flow.clone());
                 }
                 None => {}

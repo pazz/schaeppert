@@ -121,11 +121,12 @@ mod tests {
         nfa.add_initial(0);
         nfa.add_final(1);
         nfa.add_transition(0, 1, 'a');
+        nfa.add_transition(1, 1, 'a');
         let strategy = Strategy::get_maximal_strategy(2, &['a']);
         let edges = get_edges(&nfa);
         let action_flows = compute_action_flows(&strategy, &edges);
         //a single action flow
-        let flow: flow::Flow = Flow::from_entries(2, &[C0, OMEGA, C0, C0]);
+        let flow: flow::Flow = Flow::from_entries(2, &[C0, OMEGA, C0, OMEGA]);
         assert_eq!(action_flows, HashSet::from([flow]));
 
         let edges = get_edges(&nfa);
@@ -141,8 +142,10 @@ mod tests {
         let mut nfa = Nfa::new(2);
         nfa.add_initial(0);
         nfa.add_final(1);
+        nfa.add_transition(0, 0, 'b');
         nfa.add_transition(0, 1, 'a');
         nfa.add_transition(1, 0, 'b');
+        nfa.add_transition(1, 1, 'a');
         nfa.add_transition(1, 1, 'b');
         let strategy = Strategy::get_maximal_strategy(2, &['a', 'b']);
         let edges = get_edges(&nfa);
@@ -151,8 +154,8 @@ mod tests {
         assert_eq!(
             computed,
             HashSet::from([
-                Flow::from_entries(2, &[C0, OMEGA, C0, C0]),
-                Flow::from_entries(2, &[C0, C0, OMEGA, OMEGA]),
+                Flow::from_entries(2, &[C0, OMEGA, C0, OMEGA]),
+                Flow::from_entries(2, &[OMEGA, C0, OMEGA, OMEGA]),
             ])
         );
         let edges = get_edges(&nfa);
@@ -212,6 +215,6 @@ mod tests {
 
         let solution = solve(&nfa);
         print!("{}", solution);
-        assert_eq!(solution.result, false);
+        assert_eq!(solution.result, true);
     }
 }
