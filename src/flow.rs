@@ -11,11 +11,26 @@ use std::{collections::HashSet, vec::Vec};
 
 pub type Domain = Vec<Coef>;
 
-#[derive(Eq, PartialEq, PartialOrd, Hash, Clone, Debug)]
+#[derive(Eq, PartialEq, Hash, Clone, Debug)]
 pub struct Flow {
     pub dim: usize,
     //size is dim * dim
     entries: Vec<Coef>,
+}
+
+impl PartialOrd for Flow {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        let self_is_smaller_than_other =
+            (0..self.dim * self.dim).all(|i| self.entries[i] <= other.entries[i]);
+        let self_is_greater_than_other =
+            (0..self.dim * self.dim).all(|i| self.entries[i] >= other.entries[i]);
+        match (self_is_smaller_than_other, self_is_greater_than_other) {
+            (true, true) => Some(std::cmp::Ordering::Equal),
+            (true, false) => Some(std::cmp::Ordering::Less),
+            (false, true) => Some(std::cmp::Ordering::Greater),
+            (false, false) => None,
+        }
+    }
 }
 
 impl Mul for &Flow {
@@ -129,17 +144,17 @@ impl Flow {
     WIP
     */
     pub(crate) fn from_domain_and_edges(domain: &sheep::Sheep, edges: &Graph) -> HashSet<Flow> {
-        debug!("Creating flow from domain and edges");
-        debug!("domain {}", domain);
-        debug!("edges {}", edges);
+        //debug!("Creating flow from domain and edges");
+        //debug!("domain\n{}", domain);
+        //debug!("edges{}", edges);
 
         let dim = domain.len();
         if edges.iter().any(|f| f.0 >= dim || f.1 >= dim) {
             panic!("Edge out of domain");
         }
         let lines = Self::get_lines_vec(domain, edges);
-        Self::cartesian_product(&lines)
-            .iter()
+        partitions::cartesian_product(&lines)
+            .into_iter()
             .map(|x| Flow {
                 dim,
                 entries: x.iter().flat_map(|x| x.iter()).cloned().collect(),
@@ -170,24 +185,6 @@ impl Flow {
 
     fn is_omega(entries: &[Coef], i: usize, j: usize, dim: usize) -> bool {
         entries[i * dim + j] == OMEGA
-    }
-
-    //takes a vector of vectors of a generic type and computes its cartesain product
-    fn cartesian_product<T: Clone + Eq + std::hash::Hash>(vectors: &[Vec<T>]) -> HashSet<Vec<T>> {
-        match vectors.len() {
-            0 => HashSet::new(),
-            1 => vectors[0].iter().map(|x| vec![x.clone()]).collect(),
-            _ => {
-                let mut result = HashSet::new();
-                for x in &vectors[0] {
-                    for mut y in Self::cartesian_product(&vectors[1..]) {
-                        y.insert(0, x.clone());
-                        result.insert(y);
-                    }
-                }
-                result
-            }
-        }
     }
 
     fn get_lines_vec(domain: &sheep::Sheep, edges: &Graph) -> Vec<Vec<Domain>> {

@@ -51,7 +51,7 @@ impl fmt::Display for Strategy {
         let vec: Vec<String> = self
             .0
             .iter()
-            .map(|x| format!("action {}\\n {}", x.0, x.1))
+            .map(|x| format!("action {} played in\n{}\n\n", x.0, x.1))
             .collect();
         write!(f, "{}", vec.join("\n"))
     }

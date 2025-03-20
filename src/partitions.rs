@@ -1,4 +1,4 @@
-use std::vec::Vec;
+use std::{collections::HashSet, vec::Vec};
 
 /* get all partitions of non-negative integers of length len and sum equal to x.
 E.g. if len = 3 and x = 4 returns [[4,0,0], [3,1,0], [3,0,1], [2,2,0], [2,1,1], ...., [0,0,4]]
@@ -25,6 +25,28 @@ fn get_partitions_rec(start_index: usize, current: &mut Vec<u16>, result: &mut V
             current[i] = 0;
         });
         get_partitions_rec(start_index + 1, current, result);
+    }
+}
+
+//takes a vector of vectors of a generic type and computes its cartesain product
+//returns an iterator over Vec<T> where T is the generic type
+pub fn cartesian_product<T: Clone + Eq + std::hash::Hash>(vectors: &[Vec<T>]) -> Vec<Vec<T>> {
+    match vectors.len() {
+        0 => vec![],
+        1 => vectors[0]
+            .iter()
+            .map(|x| vec![x.clone()])
+            .collect::<Vec<_>>(),
+        _ => {
+            let mut result = HashSet::new();
+            for x in &vectors[0] {
+                for mut y in cartesian_product(&vectors[1..]) {
+                    y.insert(0, x.clone());
+                    result.insert(y);
+                }
+            }
+            result.into_iter().collect::<Vec<Vec<T>>>()
+        }
     }
 }
 

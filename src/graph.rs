@@ -1,4 +1,4 @@
-use crate::nfa;
+use crate::{nfa, partitions};
 use std::{collections::HashSet, fmt};
 
 //Eq and Partial Eq
@@ -25,9 +25,16 @@ impl Graph {
         Graph(vec.into_iter().collect())
     }
 
-    //todo: optimize data structure to get constant time
     pub(crate) fn get_successors(&self, i: usize) -> Vec<usize> {
-        self.0.iter().filter(|x| x.0 == i).map(|x| x.1).collect()
+        self.0
+            .iter()
+            .filter_map(|&(i0, j0)| (i == i0).then_some(j0))
+            .collect()
+    }
+
+    pub(crate) fn get_choices(&self, dim: usize) -> Vec<Vec<usize>> {
+        let successors = (0..dim).map(|i| self.get_successors(i)).collect::<Vec<_>>();
+        partitions::cartesian_product(&successors)
     }
 }
 
@@ -35,6 +42,6 @@ impl fmt::Display for Graph {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut vec: Vec<String> = self.0.iter().map(|x| format!("{:?}", x)).collect();
         vec.sort();
-        write!(f, "{}", vec.join("\r\n\t"))
+        write!(f, "\n\t{}", vec.join("\n\t"))
     }
 }

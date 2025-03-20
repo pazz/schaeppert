@@ -26,38 +26,7 @@ fn main() {
         5.  instance of the symbolic path problem
         6.  symbolic monoid
          */
-    let nfa = get_nfa();
+    let nfa = nfa::Nfa::get_nfa("((a#b){a,b})#");
     let solution = solver::solve(&nfa);
     println!("{}", solution);
-}
-
-fn get_nfa() -> nfa::Nfa {
-    let mut nfa = nfa::Nfa::new(5);
-    /* it all starts in 0 */
-    nfa.add_initial(0);
-
-    /* 4 is the unique final state, absorbing */
-    nfa.add_transition(4, 4, 'a');
-    nfa.add_transition(4, 4, 'b');
-    nfa.add_transition(4, 4, 'c');
-    nfa.add_final(4);
-
-    /* play a for some time, until a single token remains in 0 */
-    nfa.add_transition(0, 1, 'a');
-    nfa.add_transition(1, 1, 'a');
-
-    /* then play b, the token might move to either 2 or 3, while other tokens stay in 1 */
-    nfa.add_transition(0, 2, 'b');
-    nfa.add_transition(0, 3, 'b');
-    nfa.add_transition(1, 1, 'b');
-
-    /* designate the side of the token, and save it to the final state 5 */
-    nfa.add_transition(2, 4, 'l');
-    nfa.add_transition(3, 4, 'r');
-
-    /* other tokens are back to 0, ready to proceed with another round */
-    nfa.add_transition(1, 0, 'l');
-    nfa.add_transition(1, 0, 'r');
-
-    nfa
 }

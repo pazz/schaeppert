@@ -1,4 +1,4 @@
-use crate::coef::Coef;
+use crate::coef::{Coef, OMEGA};
 use std::cmp::min;
 use std::fmt;
 use std::vec::Vec;
@@ -67,6 +67,10 @@ impl Sheep {
             result[x] = Coef::Value(partition[i]);
         }
         Sheep(result)
+    }
+
+    pub(crate) fn all_omega(&self, succ: &Vec<usize>) -> bool {
+        succ.iter().all(|&i| self.get(i) == OMEGA)
     }
 }
 

@@ -31,10 +31,12 @@ pub fn solve(nfa: &nfa::Nfa) -> Solution {
         let action_flows = compute_action_flows(&strategy, &edges);
         debug!("\nAction flows:\n{}", flows_to_string(&action_flows));
         let semigroup = semigroup::FlowSemigroup::compute(&action_flows);
-        debug!("Semigroup: {}", semigroup);
-        let winning_ideal = semigroup.get_winning_ideal(&final_states);
-        debug!("Winning ideal: {}", winning_ideal);
+        debug!("Semigroup:\n{}", semigroup);
+        let winning_ideal = semigroup.get_path_problem_solution(&final_states);
+        debug!("Winning ideal for the path problem:\n{}", winning_ideal);
+        debug!("Strategy before restriction:\n{}", strategy);
         let changed = strategy.restrict_to(winning_ideal, &edges);
+        debug!("Strategy after restriction:\n{}", strategy);
         if !changed {
             break;
         }
@@ -55,6 +57,9 @@ fn get_omega_sheep(dim: usize, states: HashSet<usize>) -> Sheep {
 }
 
 fn get_edges(nfa: &Nfa) -> HashMap<nfa::Letter, Graph> {
+    if !nfa.is_complete() {
+        panic!("The NFA is not complete");
+    }
     nfa.get_letters()
         .iter()
         .map(|action| (*action, Graph::new(&nfa.transitions(), action)))
@@ -89,13 +94,13 @@ impl fmt::Display for Solution {
         if self.result {
             write!(
                 f,
-                "Controllable\nMaximal winning random walk:\n\t{}",
+                "***************\nAnswer: controllable\n\nMaximal winning random walk:\n\n{}\n***************\n",
                 self.maximal_winning_strategy
             )
         } else {
             write!(
                 f,
-                "Uncontrollable\nnMaximal winning random walk\n\t{}",
+                "***************\nAnswer: uncontrollable\n\nMaximal winning random walk\n\n{}\n***************\n",
                 self.maximal_winning_strategy
             )
         }
@@ -160,7 +165,7 @@ mod tests {
     }
 
     #[test]
-    fn test_solve() {
+    fn test_solve_positive_mono_letter() {
         let mut nfa = Nfa::new(2);
         nfa.add_initial(0);
         nfa.add_final(1);
@@ -173,5 +178,40 @@ mod tests {
             solution.maximal_winning_strategy,
             Strategy::get_maximal_strategy(2, &['a'])
         );
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_solve_panic_if_nfa_not_complete() {
+        let mut nfa = Nfa::new(3);
+        nfa.add_initial(0);
+        nfa.add_final(2);
+        nfa.add_transition(0, 1, 'a');
+        nfa.add_transition(0, 2, 'a');
+        nfa.add_transition(2, 2, 'a');
+        solve(&nfa);
+    }
+
+    #[test]
+    fn test_solve_negative_mono_letter() {
+        let mut nfa = Nfa::new(3);
+        nfa.add_initial(0);
+        nfa.add_final(2);
+        nfa.add_transition(0, 1, 'a');
+        nfa.add_transition(1, 1, 'a');
+        nfa.add_transition(0, 2, 'a');
+        nfa.add_transition(2, 2, 'a');
+        let solution = solve(&nfa);
+        print!("{}", solution);
+        assert_eq!(solution.result, false);
+    }
+
+    #[test]
+    fn test_solve_positive_two_letters() {
+        let nfa = Nfa::get_nfa("((a#b){a,b})#");
+
+        let solution = solve(&nfa);
+        print!("{}", solution);
+        assert_eq!(solution.result, false);
     }
 }
