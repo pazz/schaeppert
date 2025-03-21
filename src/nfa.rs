@@ -314,6 +314,7 @@ mod test {
         //print!("{:?}", nfa);
         assert_eq!(nfa.states.len(), 6);
         for state in nfa.states.iter() {
+            //allow duplicates of state with different tikz ids but same label
             assert!(["ini", "ready", "barn", "left", "right", "wolf"].contains(&state.as_str()));
         }
         assert_eq!(nfa.initial_states().len(), 1);
