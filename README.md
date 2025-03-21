@@ -21,9 +21,15 @@ Install rust and cargo from https://www.rust-lang.org/tools/install
 In the root folder launch
 ```cargo run -- -f examples/example1.tikz```
 
-#Using shepherd
-Create an automaton using https://finsm.io
-Copy paste the export (in Tikz format) in some local file 
+That will load an automaton from the file ```examples/example1.tikz```,
+compute the maximal winning strategy for the random population control problem
+and display the details in the terminal.
 
-```cargo add clap --features derive```
+The file ```examples.pdf```at the root give details about examples.
+
+#Generate input files in tikz format
+
+- Create an automaton using https://finsm.io
+- Copy paste the export (in Tikz format) in some local file and give it as input to shepherd, using the `-f` option.
+
 
