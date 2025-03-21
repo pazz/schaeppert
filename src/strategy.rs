@@ -11,12 +11,12 @@ use std::fmt;
 pub struct Strategy(HashMap<nfa::Letter, Ideal>);
 
 impl Strategy {
-    pub fn get_maximal_strategy(dim: usize, letters: &[nfa::Letter]) -> Self {
+    pub fn get_maximal_strategy(dim: usize, letters: &[&str]) -> Self {
         let maximal_ideal = Ideal::from_vecs(&[&vec![OMEGA; dim]]);
         Strategy(
             letters
                 .iter()
-                .map(|l| (*l, maximal_ideal.clone()))
+                .map(|&l| (l.to_string(), maximal_ideal.clone()))
                 .collect(),
         )
     }
@@ -64,15 +64,15 @@ mod tests {
     #[test]
     fn test_strategy() {
         let dim = 2;
-        let letters = ['a', 'b'];
+        let letters = ["a", "b"];
         let strategy = Strategy::get_maximal_strategy(dim, &letters);
         let source = Sheep::new(dim, OMEGA);
         assert!(strategy.is_defined_on(&source));
         assert_eq!(
             strategy.0,
             HashMap::from([
-                ('a', Ideal::from_vecs(&[&[OMEGA, OMEGA]])),
-                ('b', Ideal::from_vecs(&[&[OMEGA, OMEGA]]))
+                ('a'.to_string(), Ideal::from_vecs(&[&[OMEGA, OMEGA]])),
+                ('b'.to_string(), Ideal::from_vecs(&[&[OMEGA, OMEGA]]))
             ])
         );
     }

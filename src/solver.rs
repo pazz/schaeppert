@@ -23,7 +23,7 @@ pub fn solve(nfa: &nfa::Nfa) -> Solution {
     let final_states = nfa.final_states();
 
     let edges = get_edges(nfa);
-    let mut strategy = Strategy::get_maximal_strategy(dim, &nfa.get_letters());
+    let mut strategy = Strategy::get_maximal_strategy(dim, &nfa.get_alphabet());
     let mut result = true;
 
     while result {
@@ -60,9 +60,9 @@ fn get_edges(nfa: &Nfa) -> HashMap<nfa::Letter, Graph> {
     if !nfa.is_complete() {
         panic!("The NFA is not complete");
     }
-    nfa.get_letters()
+    nfa.get_alphabet()
         .iter()
-        .map(|action| (*action, Graph::new(&nfa.transitions(), action)))
+        .map(|action| (action.to_string(), nfa.get_support(action)))
         .collect()
 }
 
@@ -118,11 +118,11 @@ mod tests {
     #[test]
     fn test_nfa_1() {
         let mut nfa = Nfa::new(2);
-        nfa.add_initial(0);
-        nfa.add_final(1);
-        nfa.add_transition(0, 1, 'a');
-        nfa.add_transition(1, 1, 'a');
-        let strategy = Strategy::get_maximal_strategy(2, &['a']);
+        nfa.add_initial_by_index(0);
+        nfa.add_final_by_index(1);
+        nfa.add_transition_by_index(0, 1, 'a');
+        nfa.add_transition_by_index(1, 1, 'a');
+        let strategy = Strategy::get_maximal_strategy(2, &["a"]);
         let edges = get_edges(&nfa);
         let action_flows = compute_action_flows(&strategy, &edges);
         //a single action flow
@@ -132,7 +132,7 @@ mod tests {
         let edges = get_edges(&nfa);
         assert_eq!(edges, {
             let mut map = HashMap::new();
-            map.insert('a', Graph::new(&nfa.transitions(), &'a'));
+            map.insert("a".to_string(), nfa.get_support("a"));
             map
         });
     }
@@ -140,14 +140,14 @@ mod tests {
     #[test]
     fn test_nfa_2() {
         let mut nfa = Nfa::new(2);
-        nfa.add_initial(0);
-        nfa.add_final(1);
-        nfa.add_transition(0, 0, 'b');
-        nfa.add_transition(0, 1, 'a');
-        nfa.add_transition(1, 0, 'b');
-        nfa.add_transition(1, 1, 'a');
-        nfa.add_transition(1, 1, 'b');
-        let strategy = Strategy::get_maximal_strategy(2, &['a', 'b']);
+        nfa.add_initial_by_index(0);
+        nfa.add_final_by_index(1);
+        nfa.add_transition_by_index(0, 0, 'b');
+        nfa.add_transition_by_index(0, 1, 'a');
+        nfa.add_transition_by_index(1, 0, 'b');
+        nfa.add_transition_by_index(1, 1, 'a');
+        nfa.add_transition_by_index(1, 1, 'b');
+        let strategy = Strategy::get_maximal_strategy(2, &["a", "b"]);
         let edges = get_edges(&nfa);
         let computed = compute_action_flows(&strategy, &edges);
         //a single action flow
@@ -159,27 +159,24 @@ mod tests {
             ])
         );
         let edges = get_edges(&nfa);
-        assert_eq!(edges, {
-            let mut map = HashMap::new();
-            map.insert('a', Graph::new(&nfa.transitions(), &'a'));
-            map.insert('b', Graph::new(&nfa.transitions(), &'b'));
-            map
-        });
+        assert_eq!(edges.len(), 2);
+        assert_eq!(edges.get("a").unwrap(), &nfa.get_support(&"a"));
+        assert_eq!(edges.get("b").unwrap(), &nfa.get_support(&"b"));
     }
 
     #[test]
     fn test_solve_positive_mono_letter() {
         let mut nfa = Nfa::new(2);
-        nfa.add_initial(0);
-        nfa.add_final(1);
-        nfa.add_transition(0, 0, 'a');
-        nfa.add_transition(0, 1, 'a');
-        nfa.add_transition(1, 1, 'a');
+        nfa.add_initial_by_index(0);
+        nfa.add_final_by_index(1);
+        nfa.add_transition_by_index(0, 0, 'a');
+        nfa.add_transition_by_index(0, 1, 'a');
+        nfa.add_transition_by_index(1, 1, 'a');
         let solution = solve(&nfa);
         assert_eq!(solution.result, true);
         assert_eq!(
             solution.maximal_winning_strategy,
-            Strategy::get_maximal_strategy(2, &['a'])
+            Strategy::get_maximal_strategy(2, &["a"])
         );
     }
 
@@ -187,23 +184,23 @@ mod tests {
     #[should_panic]
     fn test_solve_panic_if_nfa_not_complete() {
         let mut nfa = Nfa::new(3);
-        nfa.add_initial(0);
-        nfa.add_final(2);
-        nfa.add_transition(0, 1, 'a');
-        nfa.add_transition(0, 2, 'a');
-        nfa.add_transition(2, 2, 'a');
+        nfa.add_initial_by_index(0);
+        nfa.add_final_by_index(2);
+        nfa.add_transition_by_index(0, 1, 'a');
+        nfa.add_transition_by_index(0, 2, 'a');
+        nfa.add_transition_by_index(2, 2, 'a');
         solve(&nfa);
     }
 
     #[test]
     fn test_solve_negative_mono_letter() {
         let mut nfa = Nfa::new(3);
-        nfa.add_initial(0);
-        nfa.add_final(2);
-        nfa.add_transition(0, 1, 'a');
-        nfa.add_transition(1, 1, 'a');
-        nfa.add_transition(0, 2, 'a');
-        nfa.add_transition(2, 2, 'a');
+        nfa.add_initial_by_index(0);
+        nfa.add_final_by_index(2);
+        nfa.add_transition_by_index(0, 1, 'a');
+        nfa.add_transition_by_index(1, 1, 'a');
+        nfa.add_transition_by_index(0, 2, 'a');
+        nfa.add_transition_by_index(2, 2, 'a');
         let solution = solve(&nfa);
         print!("{}", solution);
         assert_eq!(solution.result, false);
