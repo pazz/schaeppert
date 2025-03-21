@@ -1,4 +1,4 @@
-use crate::{nfa, partitions};
+use crate::partitions;
 use std::{collections::HashSet, fmt};
 
 //Eq and Partial Eq
@@ -6,14 +6,8 @@ use std::{collections::HashSet, fmt};
 pub struct Graph(HashSet<(usize, usize)>);
 
 impl Graph {
-    pub fn new(transitions: &[nfa::Transition], letter: &nfa::Letter) -> Self {
-        Graph(
-            transitions
-                .iter()
-                .filter(|t| t.letter == *letter)
-                .map(|t| (t.from, t.to))
-                .collect(),
-        )
+    pub fn new(edges: &[(usize, usize)]) -> Self {
+        Graph(edges.iter().cloned().collect())
     }
 
     pub(crate) fn iter(&self) -> impl Iterator<Item = &(usize, usize)> {
