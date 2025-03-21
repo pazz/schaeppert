@@ -1,6 +1,6 @@
 # Shepherd
 
-Shepherd is a Rust implementation of an algorithm solving the random population control problem,
+`Shepherd` is a Rust implementation of an algorithm solving the random population control problem,
 presented in https://arxiv.org/abs/2411.15181 .
 
 Starting from an nfa with states Q, the algorithm performs a fixpoint computation of the 

@@ -38,7 +38,7 @@ fn main() {
     match args.test {
         true => nfa = Some(nfa::Nfa::get_nfa("((a#b){a,b})#")),
         false => {
-            match (args.filename) {
+            match args.filename {
                 Some(filename) => match read_file(&filename) {
                     Ok(content) => match args.input_type.as_str() {
                         "tikz" => {
