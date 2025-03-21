@@ -1,3 +1,8 @@
+use clap::Parser;
+use nfa::Nfa;
+use std::fs::File;
+use std::io::{self, Read};
+use std::process;
 mod coef;
 mod flow;
 mod graph;
@@ -9,24 +14,63 @@ mod sheep;
 mod solver;
 mod strategy;
 
+#[derive(clap::Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short, long)]
+    filename: Option<String>,
+
+    #[arg(short, long, default_value = "tikz")]
+    input_type: String,
+
+    #[arg(short, long, action)]
+    test: bool,
+}
+
 fn main() {
     env_logger::init();
-    /*
-        The objective is to be able to perform the following operations:
-        1.	Load an NFA from a file.
-        2.	Compute a symbolic representation of the set of winning configurations,
-            using a black box that solves the symbolic path problem.
-        3. implement the black box that solves the symbolic path problem.
-            3a. we need to saturate by two operations: product and iteration
-    For this, we need several objects:
-        1.	NFAs (Non-deterministic Finite Automata).
-        2.	Symbolic configuration
-        3.  arena (i.e. set of symbolic configuration)
-        4.  symbolic flow. stores the set of OMEGA and the set of 1 or OMEGA
-        5.  instance of the symbolic path problem
-        6.  symbolic monoid
-         */
-    let nfa = nfa::Nfa::get_nfa("((a#b){a,b})#");
-    let solution = solver::solve(&nfa);
+
+    let args = Args::parse();
+
+    // Get the arguments
+
+    let nfa: Option<Nfa>;
+    match args.test {
+        true => nfa = Some(nfa::Nfa::get_nfa("((a#b){a,b})#")),
+        false => {
+            match (args.filename) {
+                Some(filename) => match read_file(&filename) {
+                    Ok(content) => match args.input_type.as_str() {
+                        "tikz" => {
+                            nfa = Some(nfa::Nfa::from_tikz(&content));
+                        }
+                        _ => {
+                            eprintln!("Invalid format: {}", args.input_type);
+                            eprintln!("Known formats: [tikz]");
+                            process::exit(1);
+                        }
+                    },
+                    Err(e) => {
+                        eprintln!("Error reading file '{}': '{}'", filename, e);
+                        process::exit(1);
+                    }
+                },
+                None => {
+                    eprintln!("Provide filename");
+                    process::exit(1);
+                }
+            }
+            assert!(nfa.is_some());
+        }
+    }
+    let solution = solver::solve(&nfa.unwrap());
     println!("{}", solution);
+}
+
+/// Reads the content of the file
+fn read_file(filename: &str) -> io::Result<String> {
+    let mut file = File::open(filename)?;
+    let mut content = String::new();
+    file.read_to_string(&mut content)?;
+    Ok(content)
 }

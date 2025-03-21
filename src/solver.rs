@@ -117,7 +117,7 @@ mod tests {
     //test compute_action_flows
     #[test]
     fn test_nfa_1() {
-        let mut nfa = Nfa::new(2);
+        let mut nfa = Nfa::from_size(2);
         nfa.add_initial_by_index(0);
         nfa.add_final_by_index(1);
         nfa.add_transition_by_index(0, 1, 'a');
@@ -139,7 +139,7 @@ mod tests {
 
     #[test]
     fn test_nfa_2() {
-        let mut nfa = Nfa::new(2);
+        let mut nfa = Nfa::from_size(2);
         nfa.add_initial_by_index(0);
         nfa.add_final_by_index(1);
         nfa.add_transition_by_index(0, 0, 'b');
@@ -166,7 +166,7 @@ mod tests {
 
     #[test]
     fn test_solve_positive_mono_letter() {
-        let mut nfa = Nfa::new(2);
+        let mut nfa = Nfa::from_size(2);
         nfa.add_initial_by_index(0);
         nfa.add_final_by_index(1);
         nfa.add_transition_by_index(0, 0, 'a');
@@ -183,7 +183,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_solve_panic_if_nfa_not_complete() {
-        let mut nfa = Nfa::new(3);
+        let mut nfa = Nfa::from_size(3);
         nfa.add_initial_by_index(0);
         nfa.add_final_by_index(2);
         nfa.add_transition_by_index(0, 1, 'a');
@@ -194,7 +194,7 @@ mod tests {
 
     #[test]
     fn test_solve_negative_mono_letter() {
-        let mut nfa = Nfa::new(3);
+        let mut nfa = Nfa::from_size(3);
         nfa.add_initial_by_index(0);
         nfa.add_final_by_index(2);
         nfa.add_transition_by_index(0, 1, 'a');
