@@ -16,7 +16,8 @@ Several heuristics are used in order to keep the size of the set small:
 * a call to 'minimize' removes configurations which are covered by others
 
 The method 'restrict_to' computes the intersection of the ideal with another ideal.
-The  method is 'pre_image', which computes the pre-image of an ideal by a graph.
+The method 'pre_image' computes the pre-image of an ideal by a graph.
+The method 'is_safe' checks whether it is safe to play a configuration w.r. to the graph, in the sense that it ensures the next configuration belongs to the ideal.
 
  */
 #[derive(Clone, Eq, Debug)]
@@ -222,23 +223,6 @@ impl Ideal {
         result
     }
 
-    /// Remove from the ideal any element strictly smaller than another.
-    /// The method is used in the solver to keep the size of the representation small.
-    fn minimize(&mut self) -> bool {
-        //remove from self.0 any element strictly smaller than another
-        let mut changed = false;
-        for sheep in self
-            .0
-            .iter()
-            .filter(|&x| self.0.iter().any(|y| x < y))
-            .cloned()
-            .collect::<Vec<_>>()
-        {
-            changed |= self.0.remove(&sheep);
-        }
-        changed
-    }
-
     /// Check whether it is safe to play the graph in  candidate, in the sense that it ensures
     /// the next configuration belongs to the ideal.
     ///
@@ -253,7 +237,14 @@ impl Ideal {
     /// ```
     ///
     /// ```
-    ///
+    /// use crate::ideal::Ideal;
+    /// use crate::coef::C0;
+    /// let c3 = Coef::Value(3);
+    /// let c4 = Coef::Value(4);
+    /// let edges = crate::graph::Graph::from_vec(vec![(0, 1), (0, 2)]);
+    /// let ideal = Ideal::from_vecs(&[&[C0, c3, C0], &[C0, C0, c3]]);
+    /// let candidate = vec![c4, C0, C0];
+    /// assert!(!ideal.is_safe(&candidate, &edges));
     /// ```
     fn is_safe(&self, candidate: &[Coef], edges: &crate::graph::Graph) -> bool {
         let dim = candidate.len();
@@ -275,6 +266,23 @@ impl Ideal {
             print!("image:\n{:?}\n", image);
             self.contains(&Sheep::from_vec(image))
         })
+    }
+
+    /// Remove from the ideal any element strictly smaller than another.
+    /// The method is used in the solver to keep the size of the representation small.
+    fn minimize(&mut self) -> bool {
+        //remove from self.0 any element strictly smaller than another
+        let mut changed = false;
+        for sheep in self
+            .0
+            .iter()
+            .filter(|&x| self.0.iter().any(|y| x < y))
+            .cloned()
+            .collect::<Vec<_>>()
+        {
+            changed |= self.0.remove(&sheep);
+        }
+        changed
     }
 }
 
