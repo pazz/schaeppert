@@ -26,8 +26,17 @@ impl Graph {
             .collect()
     }
 
-    pub(crate) fn get_choices(&self, dim: usize) -> Vec<Vec<usize>> {
-        let successors = (0..dim).map(|i| self.get_successors(i)).collect::<Vec<_>>();
+    pub(crate) fn get_choices(&self, dim: usize) -> Vec<Vec<Option<usize>>> {
+        let successors = (0..dim)
+            .map(|i| {
+                let succ = self.get_successors(i);
+                if succ.is_empty() {
+                    vec![None]
+                } else {
+                    succ.iter().map(|&x| Some(x)).collect()
+                }
+            })
+            .collect::<Vec<_>>();
         partitions::cartesian_product(&successors)
     }
 }
@@ -37,5 +46,20 @@ impl fmt::Display for Graph {
         let mut vec: Vec<String> = self.0.iter().map(|x| format!("{:?}", x)).collect();
         vec.sort();
         write!(f, "\n\t{}", vec.join("\n\t"))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_get_choices() {
+        let edges = vec![(0, 1), (0, 2)];
+        let graph = Graph::new(&edges);
+        let choices = graph.get_choices(3);
+        assert_eq!(choices.len(), 2);
+        assert!(choices.contains(&vec![Some(1), Some(2)]));
+        assert!(choices.contains(&vec![Some(2), Some(1)]));
     }
 }
