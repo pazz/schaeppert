@@ -155,9 +155,12 @@ impl Flow {
         let lines = Self::get_lines_vec(domain, edges);
         partitions::cartesian_product(&lines)
             .into_iter()
-            .map(|x| Flow {
-                dim,
-                entries: x.iter().flat_map(|x| x.iter()).cloned().collect(),
+            .map(|x| {
+                let entries = x
+                    .iter()
+                    .flat_map(|x| x.clone().into_iter())
+                    .collect::<Vec<_>>();
+                Flow { dim, entries }
             })
             .collect()
     }

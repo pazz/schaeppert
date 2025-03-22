@@ -28,7 +28,8 @@ fn get_partitions_rec(start_index: usize, current: &mut Vec<u16>, result: &mut V
     }
 }
 
-//takes a vector of vectors of a generic type and computes its cartesain product
+//takes a vector of vectors of a generic type and computes its cartesian product
+//this if one of the vectors is empty,
 //returns an iterator over Vec<T> where T is the generic type
 pub fn cartesian_product<T: Clone + Eq + std::hash::Hash>(vectors: &[Vec<T>]) -> Vec<Vec<T>> {
     match vectors.len() {
@@ -45,14 +46,14 @@ pub fn cartesian_product<T: Clone + Eq + std::hash::Hash>(vectors: &[Vec<T>]) ->
                     result.insert(y);
                 }
             }
-            result.into_iter().collect::<Vec<Vec<T>>>()
+            result.into_iter().collect::<Vec<Vec<_>>>()
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::partitions::get_partitions;
+    use crate::partitions::{cartesian_product, get_partitions};
 
     //test _get_partitions_rec on an example with start_index=0 current= [3,0,0] and result empty
     #[test]
@@ -71,5 +72,15 @@ mod test {
             vec![0, 0, 3],
         ];
         assert_eq!(get_partitions(x, 3), expected);
+    }
+
+    #[test]
+    fn cartesian_product_test() {
+        let empty = Vec::<u16>::new();
+        let empty_vec = Vec::<Vec<u16>>::new();
+        assert_eq!(
+            cartesian_product(&[empty.clone(), empty.clone(), empty.clone()]),
+            empty_vec
+        );
     }
 }
