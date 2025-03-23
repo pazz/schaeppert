@@ -1,0 +1,15 @@
+\begin{tikzpicture}[
+    every edge/.style={draw,auto}
+]
+	\node[state, initial] (A) at (0,0) {$s$};
+	\node[state] at (2,2) (B)  {$1$};
+	\node[state] at (2,-2) (C) {$2$};
+	\node[state,accepting] at (4,0) (D)  {$c$};
+    \path[->]
+	(A) edge node[] {$a$} (B)
+	(A) edge node[swap] {$a$} (C)
+	(B) edge node[] {$a$} (D)
+	(C) edge node[swap] {$b$} (D)
+    ;
+\end{tikzpicture}
+
