@@ -7,7 +7,7 @@ use crate::nfa::Nfa;
 use crate::semigroup;
 use crate::sheep::Sheep;
 use crate::strategy::Strategy;
-use log::debug;
+use log::{debug, warn};
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt;
@@ -17,7 +17,20 @@ pub struct Solution {
     pub maximal_winning_strategy: Strategy,
 }
 
-pub fn solve(nfa: &nfa::Nfa) -> Solution {
+pub fn solve(original_nfa: &nfa::Nfa) -> Solution {
+    let complete_nfa;
+    let nfa = match original_nfa.is_complete() {
+        true => original_nfa,
+        false => {
+            complete_nfa = nfa::Nfa::turn_into_complete_nfa(original_nfa).unwrap();
+            warn!(
+                "The NFA was not complete. It was turned into the following complete NFA {}.",
+                complete_nfa
+            );
+            &complete_nfa
+        }
+    };
+
     let dim = nfa.nb_states();
     let source = get_omega_sheep(dim, nfa.initial_states());
     let final_states = nfa.final_states();
@@ -181,15 +194,20 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    fn test_solve_panic_if_nfa_not_complete() {
-        let mut nfa = Nfa::from_size(3);
+    fn test_solve_is_completing_nfa() {
+        let nb_states = 3;
+        let mut nfa = Nfa::from_size(nb_states);
         nfa.add_initial_by_index(0);
         nfa.add_final_by_index(2);
         nfa.add_transition_by_index(0, 1, 'a');
         nfa.add_transition_by_index(0, 2, 'a');
-        nfa.add_transition_by_index(2, 2, 'a');
-        solve(&nfa);
+        nfa.add_transition_by_index(1, 2, 'a');
+        assert!(!nfa.is_complete());
+        let solution = solve(&nfa);
+        assert_eq!(
+            solution.maximal_winning_strategy.dim().unwrap(),
+            nb_states + 1
+        );
     }
 
     #[test]
