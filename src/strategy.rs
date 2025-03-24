@@ -7,6 +7,9 @@ use crate::sheep::Sheep;
 use std::collections::HashMap;
 use std::fmt;
 
+/// A strategy is a map from letters to ideals, possibly empty.
+/// All non-empty ideals have the same dimension, this is the number of states of the (complete) nfa.
+/// The ideal associated to a letter represents the set of configurations where the strategy can non-deterministically play the letter.
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Strategy(HashMap<nfa::Letter, Ideal>);
 
@@ -19,6 +22,11 @@ impl Strategy {
                 .map(|&l| (l.to_string(), maximal_ideal.clone()))
                 .collect(),
         )
+    }
+
+    #[allow(dead_code)]
+    pub fn dim(&self) -> Option<usize> {
+        self.0.values().filter_map(|ideal| ideal.dim()).next()
     }
 
     pub fn is_defined_on(&self, source: &Sheep) -> bool {
