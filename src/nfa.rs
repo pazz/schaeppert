@@ -165,6 +165,10 @@ impl Nfa {
         self.states.len()
     }
 
+    pub fn states_str(&self) -> String {
+        format!("| {} |", self.states.join(" , "))
+    }
+
     pub(crate) fn initial_states(&self) -> HashSet<State> {
         self.initial.clone()
     }
