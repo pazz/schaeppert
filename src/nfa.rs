@@ -44,7 +44,6 @@ impl Nfa {
         }
     }
 
-    #[allow(dead_code)]
     pub fn from_tikz(input: &str) -> Self {
         let state_re = Regex::new(
             r"\\node\[(?P<attrs>[^\]]*)\] at \([^)]+\) \((?P<id>\w+)\) \{\$(?P<name>[^$]+)\$\}",
@@ -127,7 +126,6 @@ impl Nfa {
         });
     }
 
-    #[allow(dead_code)]
     pub fn add_transition(&mut self, from: &str, to: &str, label: &str) {
         let from = self.get_state_index(from);
         let to = self.get_state_index(to);
@@ -154,12 +152,10 @@ impl Nfa {
         self.accepting.insert(q);
     }
 
-    #[allow(dead_code)]
     pub fn add_initial(&mut self, q: &str) {
         self.initial.insert(self.get_state_index(q));
     }
 
-    #[allow(dead_code)]
     pub fn add_final(&mut self, q: &str) {
         self.accepting.insert(self.get_state_index(q));
     }
@@ -175,6 +171,8 @@ impl Nfa {
     pub(crate) fn final_states(&self) -> Vec<State> {
         self.accepting.iter().cloned().collect()
     }
+
+    pub(crate) fn make_complete(&mut self) -> bool {}
 
     pub(crate) fn is_complete(&self) -> bool {
         self.get_alphabet().iter().all(|letter| {
