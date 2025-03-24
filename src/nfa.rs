@@ -47,11 +47,11 @@ impl Nfa {
 
     pub fn from_tikz(input: &str) -> Self {
         let state_re = Regex::new(
-            r"\\node\[(?P<attrs>[^\]]*)\] at \([^)]+\) \((?P<id>\w+)\) \{\$(?P<name>[^$]+)\$\}",
+            r"\\node\[(?P<attrs>[^\]]*)\]\s*at\s*\([^)]+\)\s*\((?P<id>\w+)\)\s*\{\$(?P<name>[^$]+)\$\}",
         )
         .unwrap();
         let edge_re =
-            Regex::new(r"\((?P<from>\w+)\) edge .*? node \{\$(?P<label>[^$]+)\$\} \((?P<to>\w+)\)")
+            Regex::new(r"\((?P<from>\w+)\)\s*edge.*?\{\$(?P<label>[^$]+)\$\}\s*\((?P<to>\w+)\)")
                 .unwrap();
 
         let mut states: Vec<String> = Vec::new(); //preserves appearance order in file
@@ -163,6 +163,10 @@ impl Nfa {
 
     pub fn nb_states(&self) -> usize {
         self.states.len()
+    }
+
+    pub fn states_str(&self) -> String {
+        format!("| {} |", self.states.join(" , "))
     }
 
     pub(crate) fn initial_states(&self) -> HashSet<State> {

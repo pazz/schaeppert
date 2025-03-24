@@ -13,6 +13,7 @@ use std::collections::HashSet;
 use std::fmt;
 
 pub struct Solution {
+    pub nfa: Nfa,
     pub result: bool,
     pub maximal_winning_strategy: Strategy,
 }
@@ -56,6 +57,7 @@ pub fn solve(original_nfa: &nfa::Nfa) -> Solution {
         result = strategy.is_defined_on(&source);
     }
     Solution {
+        nfa: nfa.clone(),
         result,
         maximal_winning_strategy: strategy,
     }
@@ -104,19 +106,17 @@ fn flows_to_string(flows: &HashSet<flow::Flow>) -> String {
 
 impl fmt::Display for Solution {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.result {
-            write!(
-                f,
-                "***************\nAnswer: controllable\n\nMaximal winning random walk:\n\n{}\n***************\n",
-                self.maximal_winning_strategy
-            )
+        writeln!(f, "***************")?;
+        let answer = if self.result {
+            "controllable"
         } else {
-            write!(
-                f,
-                "***************\nAnswer: uncontrollable\n\nMaximal winning random walk\n\n{}\n***************\n",
-                self.maximal_winning_strategy
-            )
-        }
+            "uncontrollable"
+        };
+        writeln!(f, "Answer: {}", answer)?;
+        writeln!(f, "\n\nMaximal winning random walk:\n")?;
+        writeln!(f, "States:\n{}", self.nfa.states_str())?;
+        writeln!(f, "\n{}\n", self.maximal_winning_strategy)?;
+        writeln!(f, "***************")
     }
 }
 

@@ -1,0 +1,16 @@
+\begin{tikzpicture}[
+    every edge/.style={draw,auto}
+]
+	\node[state, initial] (A) at (0,0) {$s$};
+	\node[state] at (2,2) (B)  {$l$};
+	\node[state] at (2,-2) (C) {$r$};
+	\node[state] at (4,0) (D)  {$c$};
+	\node[state,accepting] at (6,0) (E) {$t$};
+    \path[->, thick, >=stealth]
+	(A) edge node[] {$b$} (B)
+	(A) edge node[swap] {$b$} (C)
+	(B) edge node[] {$d$} (D)
+	(C) edge node[swap] {$c$} (D)
+	(D) edge node[] {$e$} (E)
+    ;
+\end{tikzpicture}
