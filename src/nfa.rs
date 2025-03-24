@@ -5,6 +5,10 @@ authors @GBathie + @Numero7
 use crate::graph::Graph;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
+use std::fmt;
+
+pub type State = usize;
+pub type Letter = String;
 
 #[derive(Clone, Debug)]
 pub struct Transition {
@@ -13,16 +17,13 @@ pub struct Transition {
     pub to: State,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Nfa {
     states: Vec<String>,
     initial: HashSet<State>,
     accepting: HashSet<State>,
     transitions: Vec<Transition>,
 }
-
-pub type State = usize;
-pub type Letter = String;
 
 impl Nfa {
     pub fn from_size(nb_states: usize) -> Self {
@@ -172,7 +173,76 @@ impl Nfa {
         self.accepting.iter().cloned().collect()
     }
 
-    pub(crate) fn make_complete(&mut self) -> bool {}
+    ///completes the automata by adding an extra sink state, if needed.
+    /// and missing transitions are redrected to the sink state.
+    /// returns true iff the automaton was modified
+    pub(crate) fn turn_into_complete_nfa(nfa: &Nfa) -> Option<Self> {
+        if nfa.is_complete() {
+            None
+        } else {
+            let mut nfa = nfa.clone();
+            nfa.complete_with_sink();
+            Some(nfa)
+        }
+    }
+
+    fn complete_with_sink(&mut self) -> bool {
+        if self.is_complete() {
+            return false;
+        }
+        //look for a state from which there is no sequence of transitons to a final state
+        let mut not_sink_states = self.final_states().into_iter().collect::<HashSet<_>>();
+        loop {
+            let mut changed = false;
+            for t in self.transitions.iter() {
+                if not_sink_states.contains(&t.to) && !not_sink_states.contains(&t.from) {
+                    not_sink_states.insert(t.from);
+                    changed = true;
+                }
+            }
+            if !changed {
+                break;
+            }
+        }
+        let existing_sink_state =
+            (0..self.nb_states()).find(|state| !not_sink_states.contains(state));
+        let sink_index = match existing_sink_state {
+            Some(s) => s,
+            None => {
+                let mut sink_name = "sink".to_string();
+                while self.states.contains(&sink_name) {
+                    sink_name.push('#');
+                }
+                self.states.push(sink_name);
+                self.nb_states() - 1
+            }
+        };
+        //bad performance, not a big deal for now
+        let missing_transitions: Vec<(State, Letter)> = self
+            .get_alphabet()
+            .iter()
+            .flat_map(|letter| {
+                (0..self.nb_states())
+                    .filter(|&state| {
+                        !self
+                            .transitions
+                            .iter()
+                            .any(|t| t.from == state && t.label == *letter)
+                    })
+                    .map(|state| (state, letter.to_string()))
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+        assert!(
+            !missing_transitions.is_empty(),
+            "No missing transitions found, although the NFA failed the complete test"
+        );
+
+        for (state, letter) in missing_transitions {
+            self.add_transition_by_index(state, sink_index, letter.chars().next().unwrap());
+        }
+        true
+    }
 
     pub(crate) fn is_complete(&self) -> bool {
         self.get_alphabet().iter().all(|letter| {
@@ -234,6 +304,16 @@ impl Nfa {
     }
 }
 
+impl fmt::Display for Nfa {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "NFA\n")?;
+        writeln!(f, "States: {:?}", self.states)?;
+        writeln!(f, "Initial: {:?}", self.initial)?;
+        writeln!(f, "Accepting: {:?}", self.accepting)?;
+        writeln!(f, "Transitions: {:?}", self.transitions)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -261,6 +341,53 @@ mod test {
         assert!(letters.contains(&"a"));
         assert!(letters.contains(&"b"));
         assert!(letters.len() == 2);
+    }
+
+    #[test]
+    fn make_complete1() {
+        let mut nfa = Nfa::from_size(2);
+        nfa.add_transition_by_index(0, 1, 'a');
+        nfa.add_transition_by_index(1, 1, 'a');
+        nfa.add_initial_by_index(0);
+        nfa.add_final_by_index(0);
+        assert!(nfa.is_complete());
+        let changed = nfa.complete_with_sink();
+        assert!(!changed);
+        assert!(nfa.nb_states() == 2);
+        assert_eq!(nfa.transitions.len(), 2);
+    }
+
+    #[test]
+    fn make_complete2() {
+        let mut nfa = Nfa::from_size(2);
+        nfa.add_transition_by_index(0, 1, 'a');
+        nfa.add_initial_by_index(0);
+        nfa.add_final_by_index(0);
+        assert!(!nfa.is_complete());
+        let changed = nfa.complete_with_sink();
+        assert!(changed);
+        assert!(nfa.is_complete());
+        //no state was added
+        assert!(nfa.nb_states() == 2);
+        //a transition from 1 to 1 was added
+        assert_eq!(nfa.transitions.len(), 2);
+    }
+
+    #[test]
+    fn make_complete3() {
+        let mut nfa = Nfa::from_size(2);
+        nfa.add_transition_by_index(0, 1, 'a');
+        nfa.add_initial_by_index(0);
+        nfa.add_final_by_index(1);
+        assert!(!nfa.is_complete());
+        let changed = nfa.complete_with_sink();
+        assert!(changed);
+        assert!(nfa.is_complete());
+        //a new state was added
+        assert!(nfa.nb_states() == 3);
+        assert!(nfa.states.contains(&"sink".to_string()));
+        //a transition from 1 to 2 was added
+        assert_eq!(nfa.transitions.len(), 3);
     }
 
     #[test]

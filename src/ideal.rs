@@ -8,7 +8,7 @@ use std::{collections::HashSet, vec::Vec};
 
 /*
 An ideal is mathmatically a downward closed set of vectors in N^S.
-It is represented as a set of sheep,
+It is represented as a set of sheep, all have the same dimension,
 and the ideal is the union of downard-closure of those sheep.
 
 Several heuristics are used in order to keep the size of the set small:
@@ -38,6 +38,11 @@ impl Ideal {
     /// Create an ideal from a vector of sheeps.
     pub(crate) fn from_vec(w: &[Sheep]) -> Self {
         Ideal(w.iter().cloned().collect())
+    }
+
+    //returns the dimension of the ideal
+    pub(crate) fn dim(&self) -> Option<usize> {
+        self.0.iter().next().map(|ideal| ideal.len())
     }
 
     /// Create an ideal from a vector of vectors of coefficients.
@@ -248,11 +253,11 @@ impl Ideal {
     /// ```
     fn is_safe(&self, candidate: &[Coef], edges: &crate::graph::Graph) -> bool {
         let dim = candidate.len();
-        let choices = edges.get_choices(dim);
-        print!("edges:\n{:?}\n", edges);
-        print!("choices:\n{:?}\n", choices);
+        let choices = edges.get_maximal_deterministic_subgraphs(dim);
+        debug!("edges:\n{:?}\n", edges);
+        debug!("choices:\n{:?}\n", choices);
         choices.iter().all(|choice| {
-            print!("choice:\n{:?}\n", choice);
+            debug!("choice:\n{:?}\n", choice);
             let image = (0..dim)
                 .map(|j: usize| {
                     choice
@@ -263,7 +268,7 @@ impl Ideal {
                         .sum()
                 })
                 .collect();
-            print!("image:\n{:?}\n", image);
+            debug!("image:\n{:?}\n", image);
             self.contains(&Sheep::from_vec(image))
         })
     }
