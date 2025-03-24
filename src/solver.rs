@@ -35,6 +35,7 @@ pub fn solve(original_nfa: &nfa::Nfa) -> Solution {
     let dim = nfa.nb_states();
     let source = get_omega_sheep(dim, nfa.initial_states());
     let final_states = nfa.final_states();
+    let final_ideal = get_omega_sheep(dim, final_states.iter().cloned().collect());
 
     let edges = get_edges(nfa);
     let mut strategy = Strategy::get_maximal_strategy(dim, &nfa.get_alphabet());
@@ -46,7 +47,8 @@ pub fn solve(original_nfa: &nfa::Nfa) -> Solution {
         debug!("\nAction flows:\n{}", flows_to_string(&action_flows));
         let semigroup = semigroup::FlowSemigroup::compute(&action_flows);
         debug!("Semigroup:\n{}", semigroup);
-        let winning_ideal = semigroup.get_path_problem_solution(&final_states);
+        let mut winning_ideal = semigroup.get_path_problem_solution(&final_states);
+        winning_ideal.insert(&final_ideal);
         debug!("Winning ideal for the path problem:\n{}", winning_ideal);
         debug!("Strategy before restriction:\n{}", strategy);
         let changed = strategy.restrict_to(winning_ideal, &edges);

@@ -65,7 +65,7 @@ impl Ideal {
 
     /// Insert a sheep in the ideal.
     /// The method returns true if the ideal has changed, and false if the sheep was already in the ideal.
-    fn insert(&mut self, sheep: &Sheep) -> bool {
+    pub fn insert(&mut self, sheep: &Sheep) -> bool {
         if self.0.contains(sheep) {
             false
         } else {
@@ -189,7 +189,10 @@ impl Ideal {
 
         //print max_finite_coords and is_omega_possible
         debug!("preimage of {}\n by\n{}\n", self, edges);
-        debug!("{:?}\n{:?}\n", max_finite_coordsi, is_omega_possible);
+        debug!(
+            "\nmax_finite_coordsi {:?}\nis_omega_possible {:?}\n",
+            max_finite_coordsi, is_omega_possible
+        );
 
         let possible_coefs = (0..dim)
             .map(|i| {
@@ -254,10 +257,10 @@ impl Ideal {
     fn is_safe(&self, candidate: &[Coef], edges: &crate::graph::Graph) -> bool {
         let dim = candidate.len();
         let choices = edges.get_maximal_deterministic_subgraphs(dim);
-        debug!("edges:\n{:?}\n", edges);
-        debug!("choices:\n{:?}\n", choices);
+        //debug!("edges:\n{:?}\n", edges);
+        //debug!("choices:\n{:?}\n", choices);
         choices.iter().all(|choice| {
-            debug!("choice:\n{:?}\n", choice);
+            //debug!("choice:\n{:?}\n", choice);
             let image = (0..dim)
                 .map(|j: usize| {
                     choice
@@ -268,7 +271,7 @@ impl Ideal {
                         .sum()
                 })
                 .collect();
-            debug!("image:\n{:?}\n", image);
+            //debug!("image:\n{:?}\n", image);
             self.contains(&Sheep::from_vec(image))
         })
     }
