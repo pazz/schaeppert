@@ -1,8 +1,7 @@
-use clap::{Parser, ValueEnum};
+use clap::Parser;
 use std::fs::File;
 use std::io;
 use std::io::Write;
-use std::path::PathBuf;
 mod coef;
 mod downset;
 mod flow;
@@ -15,85 +14,24 @@ mod semigroup;
 mod solution;
 mod solver;
 mod strategy;
-use log::LevelFilter;
+use log::info;
+mod logging;
+mod cli; 
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-enum OutputFormat {
-    Plain,
-    Tex,
-    Csv,
-}
-
-#[derive(clap::Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Args {
-    #[arg(value_name = "AUTOMATON_FILE", help = "path to the input")]
-    filename: String,
-
-    #[arg(
-        short = 'f',
-        long = "from",
-        value_enum,
-        default_value = "tikz",
-        help = "The input format"
-    )]
-    input_format: nfa::InputFormat,
-
-    #[arg(
-        value_enum,
-        short = 't',
-        long = "to",
-        default_value = "plain",
-        help = "The output format"
-    )]
-    output_format: OutputFormat,
-
-    /// path to write the strategy
-    #[arg(
-        short = 'o',
-        long = "output",
-        value_name = "OUTPUT_FILE",
-        help = "where to write the strategy; defaults to stdout."
-    )]
-    output_path: Option<PathBuf>,
-
-    #[arg(
-        short,
-        long,
-        value_enum,
-        default_value = "input",
-        help = format!("The state reordering type: preserves input order, sorts alphabetically or topologically.")
-    )]
-    state_ordering: nfa::StateOrdering,
-
-    #[arg(
-        long,
-        value_enum,
-        default_value = "strategy",
-        help = format!("The solver output. Either yes/no and a winning strategy (the faster). Or the full maximal winning strategy.")
-    )]
-    solver_output: solver::SolverOutput,
-}
 
 fn main() {
-    #[cfg(debug_assertions)]
-    env_logger::Builder::new()
-        .filter_level(LevelFilter::Debug)
-        .init();
-
-    #[cfg(not(debug_assertions))]
-    env_logger::Builder::new()
-        .filter_level(LevelFilter::Info)
-        .init();
 
     // parse CLI arguments
-    let args = Args::parse();
+    let args = cli::Args::parse();
+
+    // set up logging
+    logging::setup_logger(args.verbosity, args.log_output);
 
     // parse the input file
     let nfa = nfa::Nfa::load_from_file(&args.filename, &args.input_format, &args.state_ordering);
 
     // print the input automaton
-    println!("{}", nfa);
+    info!("{}", nfa);
 
     // compute the solution
     let solution = solver::solve(&nfa, &args.solver_output);
@@ -135,20 +73,20 @@ fn main() {
 
         // prepare output string
         let output = match args.output_format {
-            OutputFormat::Tex => {
+            cli::OutputFormat::Tex => {
                 let is_tikz = args.input_format == nfa::InputFormat::Tikz;
                 let latex_content =
                     solution.as_latex(if is_tikz { Some(&args.filename) } else { None });
                 latex_content.to_string()
             }
-            OutputFormat::Plain => {
+            cli::OutputFormat::Plain => {
                 format!(
                     "States: {}\n {}",
                     nfa.states_str(),
                     solution.winning_strategy
                 )
             }
-            OutputFormat::Csv => {
+            cli::OutputFormat::Csv => {
                 format!(
                     "Σ, {}\n{}\n",
                     nfa.states().join(","),
