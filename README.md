@@ -1,3 +1,5 @@
+![My Project Logo](./images/logo.png)
+
 # Shepherd
 
 `Shepherd` is a Rust implementation of an algorithm solving the "random population control problem",
