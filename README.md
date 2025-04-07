@@ -1,4 +1,4 @@
-![My Project Logo](./images/logo.png)
+![Shepherd Logo](./images/logo.png)
 
 # Shepherd
 
