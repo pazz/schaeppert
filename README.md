@@ -1,6 +1,9 @@
-![Shepherd Logo](./images/logo.png)
+# Shepherd <img src="https://raw.githubusercontent.com/SynthesisLab/shepherd/data.table/main/.graphics/logo.png" align="right" height="140" />
 
-# Shepherd
+<!-- badges: start -->
+[![GitLab CI build status](https://gitlab.com/Rdatatable/data.table/badges/master/pipeline.svg)](https://gitlab.com/SynthesisLab/shepherd/-/pipelines)
+<!-- badges: end -->
+
 
 `Shepherd` is a Rust implementation of an algorithm solving the "random population control problem",
 as presented in <https://arxiv.org/abs/2411.15181>.
